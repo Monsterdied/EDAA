@@ -1,1 +1,11 @@
 data/
+
+*.exe
+*.out
+*.o
+
+main
+
+.vscode/
+
+build/
