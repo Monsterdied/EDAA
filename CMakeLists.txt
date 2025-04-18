@@ -17,6 +17,7 @@ set(SOURCES
     src/Edge.cpp
     src/Graph.cpp
     src/Manager.cpp
+    src/Coordinates.cpp
 )
 
 # Add the executable
