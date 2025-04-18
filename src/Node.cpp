@@ -1,4 +1,4 @@
-#include "Node.h"
+#include "../include/Node.h"
 #include <iostream>
 
 using namespace std;

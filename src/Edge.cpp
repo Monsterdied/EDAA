@@ -1,6 +1,6 @@
 #include <iostream>
-#include "Node.h"
-#include "Edge.h"
+#include "../include/Node.h"
+#include "../include/Edge.h"
 using namespace std;
 
 

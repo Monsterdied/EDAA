@@ -12,11 +12,11 @@ include_directories(.)
 
 # Add source files
 set(SOURCES
-    main.cpp
-    Node.cpp
-    Edge.cpp
-    Graph.cpp
-    Manager.cpp
+    src/main.cpp
+    src/Node.cpp
+    src/Edge.cpp
+    src/Graph.cpp
+    src/Manager.cpp
 )
 
 # Add the executable
