@@ -3,33 +3,23 @@
 using namespace std;
 
 #include <unordered_map>
+#include "Node.h"
+#include "Edge.h"
 #include <vector>
 #include <string>
 #include <utility> 
-
 class Graph {
     private:
-
-        struct Node {
-            string id;
-            string code;
-            string name;
-            string desc;
-            double latitude;
-            double longitude;
-            string zone;
-            string type;
-        };
-
         // Adjacency list representation of the graph
-        unordered_map<string, vector<pair<string, double>>> adjList; 
+        unordered_map<string, vector<Edge>> adjList; 
 
         // List of nodes in the graph
-        unordered_map<string, Node> nodes;	
+        unordered_map<string, Node*> nodes;	
         
     public: 
+        //void Graph(); // Constructor to initialize the graph
+        void addNode(Node* node); // Function to add a node to the graph~
 
-        void addNode(const string& id, double latitude, double longitude, string name = "", string type = "", string code = "", string desc = "", string zone = "");
 
         
 

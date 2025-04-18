@@ -13,6 +13,8 @@ include_directories(.)
 # Add source files
 set(SOURCES
     main.cpp
+    Node.cpp
+    Edge.cpp
     Graph.cpp
     Manager.cpp
 )

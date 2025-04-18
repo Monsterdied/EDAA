@@ -38,8 +38,8 @@ void Manager::ReadMetroStations(const string& filename) {
         iss.ignore(1, ','); 
         getline(iss, zone_id, ',');
         getline(iss, stop_url, ',');
-
-        graph.addNode(stop_id, stop_lat, stop_lon, stop_name, "metro", stop_code, stop_desc, zone_id); // Add the node to the graph
+        Node* StartingNode = new Node(stop_id, stop_lat, stop_lon, stop_name, "metro", stop_code, stop_desc, zone_id); // Create a node object
+        graph.addNode(StartingNode); // Add the node to the graph
     }
 
     file.close();

@@ -4,22 +4,12 @@
 using namespace std;
 
 
-void Graph::addNode(const string& id, double latitude, double longitude, string name, string type, string code, string desc, string zone) {
-    Node node;
-    node.id = id;
-    node.latitude = latitude;
-    node.longitude = longitude;
-    node.name = name;
-    node.type = type;
-    node.code = code;
-    node.desc = desc;
-    node.zone = zone;
-
-    nodes[id] = node; // Add the node to the nodes map
+void Graph::addNode(Node* node) {
+    nodes[node->id] = node; // Add the node to the nodes map
 
     // Initialize the adjacency list for this node
-    adjList[id] = vector<pair<string, double>>(); 
+    adjList[node->id] = vector<Edge>(); 
 
-    cout << "Node added: " << id << ", " << name << ", " << latitude << ", " << longitude << endl;
+    cout << "Node added: " << node->id << ", " << node->name << ", " << node->latitude << ", " << node->longitude << endl;
 }
 
