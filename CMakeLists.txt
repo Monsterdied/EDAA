@@ -18,6 +18,7 @@ set(SOURCES
     src/Graph.cpp
     src/Manager.cpp
     src/Coordinates.cpp
+    src/KDTree.cpp
 )
 
 # Add the executable
