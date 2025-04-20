@@ -18,6 +18,7 @@ class Manager {
         Manager(); // Constructor to initialize the Manager
 
         void ReadMetroStations(const string& filename); 
+        void ReadRoutesStops(const string& filename);
 
         
 

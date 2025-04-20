@@ -13,3 +13,17 @@ void Graph::addNode(Node* node) {
     cout << "Node added: " << node->id << ", " << node->name << ", " << node->latitude << ", " << node->longitude << endl;
 }
 
+Node* Graph::getNode(const string& id){
+    auto it = nodes.find(id); // Find the node by its ID
+    if (it != nodes.end()) {
+        return it->second; // Return the node if found
+    } else {
+        return nullptr; // Return nullptr if not found
+    }
+}
+
+void Graph::addEdge(Edge* edge){
+    // Add the edge to the adjacency list of the starting node
+    adjList[edge->startingNode->id].push_back(*edge); 
+    cout << "Edge added from " << edge->startingNode->id << " to " << edge->destinationNode->id << endl;
+}

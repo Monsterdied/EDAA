@@ -11,7 +11,7 @@ int main(){
 
 
     Manager manager; // Create a Manager object
-    manager.ReadMetroStations("../../data/MetroDoPorto/stops.txt"); // Read metro stations from a file
+    manager.ReadMetroStations("../data/MetroDoPorto/stops.txt"); // Read metro stations from a file
     
     return 0;
 }
