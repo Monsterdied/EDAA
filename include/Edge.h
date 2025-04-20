@@ -13,8 +13,9 @@ class Edge {
     public: 
         Node* startingNode; // Starting node of the edge
         Time* time; // Date associated with the edge
+        int travelTime; // Travel time in seconds
         Node* destinationNode; // Destination node of the edge
-        Edge(Node* startingNode, Node* destinationNode,Time* date); // Constructor to initialize the edge
+        Edge(Node* startingNode, Node* destinationNode,Time* date,int travelTime); // Constructor to initialize the edge
 };
 
 

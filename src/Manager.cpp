@@ -66,13 +66,13 @@ void Manager::ReadRoutesStops(const string& filename) {
         }
 
         istringstream iss(line);
-        string trip_id,arrival_time,departure_time,stop_id,stop_sequence;
+        string trip_id,arrival_time,departure_time_str,stop_id,stop_sequence;
         double stop_lat, stop_lon;
 
         // Parse the CSV line
         getline(iss, trip_id, ','); 
         getline(iss, arrival_time, ',');
-        getline(iss, departure_time, ',');
+        getline(iss, departure_time_str, ',');
         getline(iss, stop_id, ',');
         getline(iss, stop_sequence, ',');
         //convert string to int
@@ -80,11 +80,11 @@ void Manager::ReadRoutesStops(const string& filename) {
         //check if trip_id is in the map
         
         //parse the time
-        std::istringstream iss1(departure_time);
+        std::istringstream iss1(departure_time_str);
         char delim = ':'; // Delimiter for time
         int hours, minutes, seconds;
         iss1 >> hours >> delim >> minutes >> delim >> seconds;
-        Time* arrival_time_obj = new Time(hours, minutes, seconds); // Create a Time object
+        Time* departure_time = new Time(hours, minutes, seconds); // Create a Time object
 
         if (PreviousStopId.find(trip_id) != PreviousStopId.end()){
             //get the nodes
@@ -94,14 +94,19 @@ void Manager::ReadRoutesStops(const string& filename) {
             //check if the nodes are not null
             if (startingStop != nullptr && destinationStop != nullptr) {
                 //create the edge and add it to the graph
-                Edge* edge = new Edge(startingStop, destinationStop, arrival_time_obj); // Create an edge object
+                Time* previousDepartureTime = PreviousStopDeparture[trip_id]; // Get the previous departure time from the map
+                // Calculate the time difference between the two stops
+                int travelTime = departure_time->difference(*previousDepartureTime); // Calculate the time difference
+                // Create an edge with the time difference
+                cout << "Edge created from " << startingStop->id << " to " << destinationStop->id <<"travelTime: "<<travelTime<< endl;
+                Edge* edge = new Edge(startingStop, destinationStop, departure_time,travelTime); // Create an edge object
                 graph.addEdge(edge); // Add the edge to the graph
             } else {
                 cerr << "Error: Node not found for stating_stop_id: " << startingStopId << " or stop_id: " << stop_id <<"Sequence: "<<stop_sequence_int<< endl;
             }
         }
         PreviousStopId[trip_id] = stop_id; // Add the stop_id to the map with a value of 0
-        PreviousStopDeparture[trip_id] = arrival_time_obj; // Add the stop_id to the map with a value of 0
+        PreviousStopDeparture[trip_id] = departure_time; // Add the stop_id to the map with a value of 0
         //Node* StartingNode = new Node(stop_id, stop_lat, stop_lon, stop_name, "metro", stop_code, stop_desc, zone_id); // Create a node object
         
     }
