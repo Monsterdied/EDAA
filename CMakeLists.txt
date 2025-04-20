@@ -19,6 +19,7 @@ set(SOURCES
     src/Manager.cpp
     src/Coordinates.cpp
     src/KDTree.cpp
+    src/Time.cpp
 )
 
 # Add the executable
