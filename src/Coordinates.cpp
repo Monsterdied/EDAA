@@ -20,7 +20,8 @@ void Coordinates::setCoordinates(double longitude, double latitude) {
  double Coordinates::haversineDistance(const Coordinates& other) const {
     // Convert latitude and longitude from degrees to radians
     double EARTH_RADIUS_KM = 6371.0; // Earth's radius in kilometers
-    double DEG_TO_RAD = M_PI / 180.0;
+    const double PI = 3.14159265358979323846; // Pi constant
+    double DEG_TO_RAD = PI / 180.0;
     double lat1Rad = this->latitude * DEG_TO_RAD;
     double lon1Rad = this->longitude * DEG_TO_RAD;
     double lat2Rad = this->latitude * DEG_TO_RAD;
@@ -43,8 +44,9 @@ void Coordinates::setCoordinates(double longitude, double latitude) {
 }
 
 Point3D Coordinates::toPoint3D() const {
-    double latRad = latitude * M_PI / 180.0;
-    double lonRad = longitude * M_PI / 180.0;
+    const double PI = 3.14159265358979323846; // Pi constant
+    double latRad = latitude * PI / 180.0;
+    double lonRad = longitude * PI / 180.0;
     return Point3D(cos(latRad) * cos(lonRad), cos(latRad) * sin(lonRad), sin(latRad));
 }
 

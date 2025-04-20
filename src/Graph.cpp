@@ -10,7 +10,7 @@ void Graph::addNode(Node* node) {
     // Initialize the adjacency list for this node
     adjList[node->id] = vector<Edge>(); 
 
-    cout << "Node added: " << node->id << ", " << node->name << ", " << node->latitude << ", " << node->longitude << endl;
+    //cout << "Node added: " << node->id << ", " << node->name << ", " << node->latitude << ", " << node->longitude << endl;
 }
 
 Node* Graph::getNode(const string& id){
@@ -25,5 +25,15 @@ Node* Graph::getNode(const string& id){
 void Graph::addEdge(Edge* edge){
     // Add the edge to the adjacency list of the starting node
     adjList[edge->startingNode->id].push_back(*edge); 
-    cout << "Edge added from " << edge->startingNode->id << " to " << edge->destinationNode->id << endl;
+    //cout << "Edge added from " << edge->startingNode->id << " to " << edge->destinationNode->id << endl;
+}
+size_t Graph::getNodeCount() const {
+    return nodes.size();
+}
+int Graph::getEdgeCount() const {
+    int edgeCount = 0;
+    for (const auto& pair : adjList) {
+        edgeCount += pair.second.size(); // Count the edges for each node
+    }
+    return edgeCount;
 }

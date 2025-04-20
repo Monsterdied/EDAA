@@ -11,14 +11,12 @@ class Manager {
     private:
 
         Graph graph; // Graph object to manage the graph
-
+        void ReadStations(const string& filename); 
+        void ReadRoutesStops(const string& filename);
 
     public:
-
+        void ReadGIFST(const string& filename); // Function to read GIFTS data from a file
         Manager(); // Constructor to initialize the Manager
-
-        void ReadMetroStations(const string& filename); 
-        void ReadRoutesStops(const string& filename);
 
         
 

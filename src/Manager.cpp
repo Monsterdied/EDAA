@@ -9,7 +9,7 @@ using namespace std;
 Manager::Manager(){
 }
 
-void Manager::ReadMetroStations(const string& filename) {
+void Manager::ReadStations(const string& filename) {
     ifstream file(filename);
     if (!file.is_open()) {
         cerr << "Error opening file: " << filename << endl;
@@ -75,7 +75,10 @@ void Manager::ReadRoutesStops(const string& filename) {
         getline(iss, stop_sequence, ',');
         //convert string to int
         int stop_sequence_int = stoi(stop_sequence); // Convert stop_sequence to int
-        if (stop_sequence_int != 0){
+        //check if trip_id is in the map
+
+        if (nodesMap.find(trip_id) != nodesMap.end()){
+            string startingStopId = nodesMap[trip_id];
             Node* startingStop = graph.getNode( nodesMap[trip_id]); // Get the starting stop from the map
             Node* destinationStop = graph.getNode(stop_id); // Get the destination stop from the map
             if (startingStop != nullptr && destinationStop != nullptr) {
@@ -84,13 +87,20 @@ void Manager::ReadRoutesStops(const string& filename) {
                 Edge* edge = new Edge(startingStop, destinationStop, arrival_time_obj); // Create an edge object
                 graph.addEdge(edge); // Add the edge to the graph
             } else {
-                cerr << "Error: Node not found for trip_id: " << trip_id << " or stop_id: " << stop_id << endl;
+                cerr << "Error: Node not found for stating_stop_id: " << startingStopId << " or stop_id: " << stop_id <<"Sequence: "<<stop_sequence_int<< endl;
             }
         }
-        nodesMap[stop_id] = stoi(stop_id); // Add the stop_id to the map with a value of 0
+        nodesMap[trip_id] = stop_id; // Add the stop_id to the map with a value of 0
         //Node* StartingNode = new Node(stop_id, stop_lat, stop_lon, stop_name, "metro", stop_code, stop_desc, zone_id); // Create a node object
         
     }
-
+    cout << "Graph has been created with " << graph.getNodeCount() << " nodes and " << graph.getEdgeCount() << " edges." << endl;
     file.close();
+}
+
+void Manager::ReadGIFST(const string& filename){
+    string stationsFile = filename + "/stops.txt";
+    string routesFile = filename + "/stop_times.txt";
+    ReadStations(stationsFile);
+    ReadRoutesStops(routesFile);
 }

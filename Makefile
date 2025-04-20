@@ -15,6 +15,6 @@ clean:
 	@rm -rf build
 # Combined build+run
 
-all: build run
+all: clean build run
 
 .PHONY: run clean

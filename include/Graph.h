@@ -21,7 +21,8 @@ class Graph {
         void addNode(Node* node); // Function to add a node to the graph~
         Node* getNode(const string& id); // Function to get a node by its ID
         void addEdge(Edge* edge); // Function to add an edge between two nodes
-
+        size_t getNodeCount() const;
+        int getEdgeCount() const ;
 
         
 
