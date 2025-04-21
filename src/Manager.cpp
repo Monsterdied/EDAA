@@ -28,33 +28,65 @@ void Manager::ReadStations(const string& filename) {
 
     string line;
     bool isHeader = true; // To skip the header line
+    int stop_name_idx,stop_id_idx,stop_lat_idx,stop_lon_idx;
+    int lineCount = 0; // Initialize line count
     while (getline(file, line)) {
+        lineCount++; // Increment line count
+        //cout << lineCount << flush;
+        istringstream iss(line);
+        vector<string> vecLine;
+        string header;
+        while(getline(iss, header, ',')) {
+            vecLine.push_back(header); // Store each header in a vector
+        }
+
         if (isHeader) {
+            int idx = 0;
+            for (const auto& header : vecLine) {
+                if (header == "stop_lat") {
+                    stop_lat_idx = idx;
+                }else if (header == "stop_name") {
+                    stop_name_idx = idx;
+                }else if (header == "stop_id") {
+                    stop_id_idx = idx;
+                }else if (header == "stop_lon") {
+                    stop_lon_idx = idx;
+                }
+                idx++;
+            }
             isHeader = false; // Skip the first line (header)
             continue;
         }
 
-        istringstream iss(line);
-        string stop_id, stop_code, stop_name, stop_desc, zone_id, stop_url;
+        string stop_id, stop_name;
         double stop_lat, stop_lon;
 
         // Parse the CSV line
-        getline(iss, stop_id, ','); 
-        getline(iss, stop_code, ',');
-        getline(iss, stop_name, ',');
-        getline(iss, stop_desc, ',');
-        iss >> stop_lat;
-        iss.ignore(1, ','); 
-        iss >> stop_lon;
-        iss.ignore(1, ','); 
-        getline(iss, zone_id, ',');
-        getline(iss, stop_url, ',');
-        Node* StartingNode = new Node(stop_id, stop_lat, stop_lon, stop_name, "metro", stop_code, stop_desc, zone_id); // Create a node object
+        stop_id = vecLine[stop_id_idx]; // Get the stop_id from the vector
+        stop_lon = stod(vecLine[stop_lon_idx]); // Get the stop_code from the vector
+        stop_name = vecLine[stop_name_idx]; // Get the stop_name from the vector
+        stop_lat = stod(vecLine[stop_lat_idx]); // Get the stop_desc from the vector
+        cout << "stop_id: " << stop_id << ", stop_lat: " << stop_lat << ", stop_lon: " << stop_lon << ", stop_name: " << stop_name << endl;
+        Node* StartingNode = new Node(stop_id, stop_lat, stop_lon, stop_name, "metro"); // Create a node object
         graph.addNode(StartingNode); // Add the node to the graph
     }
-
+    cout << "Graph has been created with " << graph.getNodeCount() << " nodes." << endl;
     file.close();
 }
+
+void printProgressBar(double progress) {
+    const int barWidth = 50;
+    std::cout << "[";
+    int pos = barWidth * progress;
+    for (int i = 0; i < barWidth; ++i) {
+        if (i < pos) std::cout << "=";
+        else if (i == pos) std::cout << ">";
+        else std::cout << " ";
+    }
+    std::cout << "] " << std::fixed << std::setprecision(1) << progress * 100.0 << "%\r";
+    std::cout.flush();
+}
+
 
 void Manager::ReadRoutesStops(const string& filename) {
     ifstream file(filename);
@@ -69,26 +101,49 @@ void Manager::ReadRoutesStops(const string& filename) {
 
     string line;
     bool isHeader = true; // To skip the header line
+    int trip_id_idx,arrival_time_idx,departure_time_str_idx,stop_id_idx,stop_sequence_idx;
+    int lineCount = 0; // Initialize line count
     while (getline(file, line)) {
+        lineCount++; // Increment line count
+        //cout << lineCount << flush;
+        istringstream iss(line);
+        vector<string> vecLine;
+        string header;
+        while(getline(iss, header, ',')) {
+            vecLine.push_back(header); // Store each header in a vector
+        }
         if (isHeader) {
+            int idx = 0;
+            for (const auto& header : vecLine) {
+                if (header == "trip_id") {
+                    trip_id_idx = idx;
+                }else if (header == "arrival_time") {
+                    arrival_time_idx = idx;
+                }else if (header == "departure_time") {
+                    departure_time_str_idx = idx;
+                }else if (header == "stop_id") {
+                    stop_id_idx = idx;
+                }else if (header == "stop_sequence") {
+                    stop_sequence_idx = idx;
+                }
+                idx++;
+            }
             isHeader = false; // Skip the first line (header)
             continue;
         }
-
-        istringstream iss(line);
         string trip_id,arrival_time,departure_time_str,stop_id,stop_sequence;
         double stop_lat, stop_lon;
 
         // Parse the CSV line
-        getline(iss, trip_id, ','); 
-        getline(iss, arrival_time, ',');
-        getline(iss, departure_time_str, ',');
-        getline(iss, stop_id, ',');
-        getline(iss, stop_sequence, ',');
+        trip_id = vecLine[trip_id_idx]; // Get the trip_id from the vector
+        stop_id = vecLine[stop_id_idx]; // Get the stop_id from the vector
+        stop_sequence = vecLine[stop_sequence_idx]; // Get the stop_sequence from the vector
+        departure_time_str = vecLine[departure_time_str_idx]; // Get the departure_time from the vector
+        arrival_time = vecLine[arrival_time_idx]; // Get the arrival_time from the vector
         //convert string to int
+        //cout << "trip_id: " << trip_id << ", stop_id: " << stop_id << ", stop_sequence: " << stop_sequence << ", departure_time: " << departure_time_str << endl;
         int stop_sequence_int = stoi(stop_sequence); // Convert stop_sequence to int
         //check if trip_id is in the map
-        
         //parse the time
         std::istringstream iss1(departure_time_str);
         char delim = ':'; // Delimiter for time

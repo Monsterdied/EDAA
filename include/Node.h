@@ -17,7 +17,7 @@ class Node {
         double longitude;
         string zone;
         string type;
-        Node(const string& id, double latitude, double longitude, string name = "", string type = "", string code = "", string desc = "", string zone = ""); // Constructor to initialize the node
+        Node(const string& id, double latitude, double longitude, string name = "", string type = "", string code = ""); // Constructor to initialize the node
         Point3D toPoint3D() const; // Convert to Point3D
 };
 
