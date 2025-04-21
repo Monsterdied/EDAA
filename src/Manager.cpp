@@ -62,29 +62,17 @@ void Manager::ReadStations(const string& filename) {
         double stop_lat, stop_lon;
 
         // Parse the CSV line
+        //cout <<endl<<""<<endl<<"stop_name:"<< vecLine[stop_name_idx]<<endl<<"stop_id:"<< vecLine[stop_id_idx]<<endl<<"longitude:"<< vecLine[stop_lon_idx]<<endl<<"latitude:"<< vecLine[stop_lat_idx]<<endl;
         stop_id = vecLine[stop_id_idx]; // Get the stop_id from the vector
         stop_lon = stod(vecLine[stop_lon_idx]); // Get the stop_code from the vector
         stop_name = vecLine[stop_name_idx]; // Get the stop_name from the vector
         stop_lat = stod(vecLine[stop_lat_idx]); // Get the stop_desc from the vector
-        cout << "stop_id: " << stop_id << ", stop_lat: " << stop_lat << ", stop_lon: " << stop_lon << ", stop_name: " << stop_name << endl;
+        //cout << "stop_id: " << stop_id << ", stop_lat: " << stop_lat << ", stop_lon: " << stop_lon << ", stop_name: " << stop_name << endl;
         Node* StartingNode = new Node(stop_id, stop_lat, stop_lon, stop_name, "metro"); // Create a node object
         graph.addNode(StartingNode); // Add the node to the graph
     }
     cout << "Graph has been created with " << graph.getNodeCount() << " nodes." << endl;
     file.close();
-}
-
-void printProgressBar(double progress) {
-    const int barWidth = 50;
-    std::cout << "[";
-    int pos = barWidth * progress;
-    for (int i = 0; i < barWidth; ++i) {
-        if (i < pos) std::cout << "=";
-        else if (i == pos) std::cout << ">";
-        else std::cout << " ";
-    }
-    std::cout << "] " << std::fixed << std::setprecision(1) << progress * 100.0 << "%\r";
-    std::cout.flush();
 }
 
 
@@ -105,7 +93,9 @@ void Manager::ReadRoutesStops(const string& filename) {
     int lineCount = 0; // Initialize line count
     while (getline(file, line)) {
         lineCount++; // Increment line count
-        //cout << lineCount << flush;
+        if(lineCount % 100000 == 0) {
+            cout << "Processed " << lineCount << " Edges." << endl; // Print progress every 1000 lines
+        }
         istringstream iss(line);
         vector<string> vecLine;
         string header;
