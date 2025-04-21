@@ -12,6 +12,9 @@ void Graph::addNode(Node* node) {
 
     //cout << "Node added: " << node->id << ", " << node->name << ", " << node->latitude << ", " << node->longitude << endl;
 }
+unordered_map<string, Node*> Graph::getNodes() const{
+    return nodes; // Return the map of nodes
+}
 
 Node* Graph::getNode(const string& id){
     auto it = nodes.find(id); // Find the node by its ID

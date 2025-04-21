@@ -27,6 +27,7 @@ private:
     void nearestNeighbor(const KDNode* node, const Point3D& query, Point3D& best_point, double& best_dist,int depth) const;
 
 public:
+    KDTree() = default;
     KDTree(std::vector<Point3D> points);
 
     Point3D nearestNeighbor(const Point3D& query) const;

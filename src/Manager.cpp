@@ -8,6 +8,16 @@ using namespace std;
 
 Manager::Manager(){
 }
+void Manager::buildKDTree(){
+    // Get all nodes from the graph
+    vector<Point3D> points;
+    for (const auto& pair : graph.getNodes()) {
+        Node* node = pair.second;
+        Coordinates cord = Coordinates(node->longitude, node->latitude); // Create a Coordinates object
+        points.push_back(node->toPoint3D()); // Convert Node to Point3D and add to the vector
+    }
+    kdTree = KDTree(points); // Build the KD-Tree with the points
+}
 
 void Manager::ReadStations(const string& filename) {
     ifstream file(filename);
@@ -98,7 +108,7 @@ void Manager::ReadRoutesStops(const string& filename) {
                 // Calculate the time difference between the two stops
                 int travelTime = departure_time->difference(*previousDepartureTime); // Calculate the time difference
                 // Create an edge with the time difference
-                cout << "Edge created from " << startingStop->id << " to " << destinationStop->id <<"travelTime: "<<travelTime<< endl;
+                //cout << "Edge created from " << startingStop->id << " to " << destinationStop->id <<"travelTime: "<<travelTime<< endl;
                 Edge* edge = new Edge(startingStop, destinationStop, departure_time,travelTime); // Create an edge object
                 graph.addEdge(edge); // Add the edge to the graph
             } else {
