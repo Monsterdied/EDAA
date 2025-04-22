@@ -19,6 +19,7 @@ class Coordinates {
     public:
     Coordinates() = default;
     Coordinates(double longitude, double latitude);
+    Coordinates(const Point3D point);
     // get the coordinates
     pair<double, double> getCoordinates() const;
     // set the coordinates

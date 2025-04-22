@@ -9,6 +9,22 @@ Coordinates::Coordinates(double longitude_1, double latitude_1) : longitude(long
 pair<double, double> Coordinates::getCoordinates() const {
     return make_pair(longitude, latitude);
 }
+//need to be tested WARNING
+// Convert latitude and longitude to 3D Cartesian coordinates
+// Coordinates::Coordinates(double longitude, double latitude) {
+//NEED TO BE TESTED
+Coordinates::Coordinates(const Point3D point) {
+    const double PI = 3.14159265358979323846; // Pi constant
+
+    // Calculate longitude (λ) in degrees
+    double lonRad = atan2(point.y, point.x);
+    this->longitude = lonRad * 180.0 / PI;
+
+    // Calculate latitude (φ) in degrees
+    double xyProjection = sqrt(point.x * point.x + point.y * point.y);
+    double latRad = atan2(point.z, xyProjection);
+    this->latitude = latRad * 180.0 / PI;
+}
 void Coordinates::setCoordinates(double longitude, double latitude) {
     this->latitude = latitude;
     this->longitude = longitude;

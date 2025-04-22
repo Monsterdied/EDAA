@@ -11,9 +11,9 @@ int main(){
 
 
     Manager manager; // Create a Manager object
-    manager.ReadGIFST("../data/MetroDoPorto"); // Read the GIFST data from a file
-    manager.ReadGIFST("../data/STCP"); // Read the GIFST data from a file
-    manager.ReadGIFST("../data/mdb-2027-202504140043");
+    manager.ReadGIFST("../data/MetroDoPorto","metro"); // Read the GIFST data from a file
+    manager.ReadGIFST("../data/STCP","autocarro"); // Read the GIFST data from a file
+    manager.ReadGIFST("../data/mdb-2027-202504140043","comboio");
     //manager.ReadGIFST("../data/tld-651-202504210112");
     manager.buildKDTree(); // Build a KD-Tree from the graph data
 

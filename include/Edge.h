@@ -8,6 +8,7 @@ using namespace std;
 #include "Node.h"
 #include <chrono>
 #include "Time.h"
+class Node;
 class Edge {
     public: 
         Node* startingNode; // Starting node of the edge

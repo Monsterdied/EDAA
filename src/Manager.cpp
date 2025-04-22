@@ -3,7 +3,12 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <queue>
 #include <unordered_map>
+#include <cmath>
+#include <utility>
+#include <algorithm>
+#include <vector>
 using namespace std;
 
 Manager::Manager(){
@@ -13,13 +18,13 @@ void Manager::buildKDTree(){
     vector<Point3D> points;
     for (const auto& pair : graph.getNodes()) {
         Node* node = pair.second;
-        Coordinates cord = Coordinates(node->longitude, node->latitude); // Create a Coordinates object
+        Coordinates cord = node->coordinates; // Create a Coordinates object
         points.push_back(node->toPoint3D()); // Convert Node to Point3D and add to the vector
     }
     kdTree = KDTree(points); // Build the KD-Tree with the points
 }
 
-void Manager::ReadStations(const string& filename) {
+void Manager::ReadStations(const string& filename,string type) {
     ifstream file(filename);
     if (!file.is_open()) {
         cerr << "Error opening file: " << filename << endl;
@@ -68,7 +73,7 @@ void Manager::ReadStations(const string& filename) {
         stop_name = vecLine[stop_name_idx]; // Get the stop_name from the vector
         stop_lat = stod(vecLine[stop_lat_idx]); // Get the stop_desc from the vector
         //cout << "stop_id: " << stop_id << ", stop_lat: " << stop_lat << ", stop_lon: " << stop_lon << ", stop_name: " << stop_name << endl;
-        Node* StartingNode = new Node(stop_id, stop_lat, stop_lon, stop_name, "metro"); // Create a node object
+        Node* StartingNode = new Node(stop_id, stop_lat, stop_lon, stop_name, type); // Create a node object
         graph.addNode(StartingNode); // Add the node to the graph
     }
     cout << "Graph has been created with " << graph.getNodeCount() << " nodes." << endl;
@@ -169,9 +174,70 @@ void Manager::ReadRoutesStops(const string& filename) {
     file.close();
 }
 
-void Manager::ReadGIFST(const string& filename){
+void Manager::ReadGIFST(const string& filename,string type){
     string stationsFile = filename + "/stops.txt";
     string routesFile = filename + "/stop_times.txt";
-    ReadStations(stationsFile);
+    ReadStations(stationsFile,type);
     ReadRoutesStops(routesFile);
+}
+struct node_cmp
+{
+   bool operator()( const Node* a, const Node* b ) const 
+   {
+    return a->bestDistance < b->bestDistance;
+   }
+};
+
+vector<Edge*> Manager::shortestPath(const Coordinates& start, const Coordinates& goal,double max_tentative) const{
+    Point3D startPoint = kdTree.nearestNeighbor(start.toPoint3D()); // Get the closest node to the start coordinates
+    Node* startNode = graph.getNode(startPoint.id); // Get the node from the graph using the ID // Set the distance of the start node to 0
+    Node* bestPoint =startNode;
+    // Priority queue (open set)
+    priority_queue<Node*, vector<Node*>, node_cmp> openSet;
+    vector<Edge*> path; // Vector to store the path
+    bestPoint->bestDistance = bestPoint->coordinates.haversineDistance(goal); // Set the best distance to the goal coordinates
+    // Create start node
+    openSet.push(startNode);
+    double counter = 0;
+    // A* main loop
+    while (!openSet.empty()) {
+        counter++;
+        if(counter > max_tentative){
+            break;
+        }
+        Node* current = openSet.top();
+        Coordinates currentCords = current->coordinates; // Get the current node
+        int distance = currentCords.haversineDistance(goal); // Calculate the distance to the goal
+        openSet.pop();
+
+        // Get the closest node to the goal coordinates
+        if (distance == 0) {
+            // Reconstruct path
+            while (current != nullptr) {
+                Edge* edge = current->previous; // Get the previous edge
+                path.push_back(edge); // Add the current node to the path
+                current = edge->startingNode; // Get the starting node of the edge
+            }
+            reverse(path.begin(), path.end());
+            return path;
+        }
+
+        // Explore neighbors
+        vector<Edge*> directions = graph.getAdjacentEdges(current->id);
+        for (const auto& dir : directions) {
+            Node* neighbor = dir->destinationNode; // Get the neighboring node
+            if (neighbor->visited) {
+                continue; // Skip if the neighbor has already been visited
+            }
+            int distanceToGoal = neighbor->coordinates.haversineDistance(goal); // Calculate the distance to the goal
+            // Calculate tentative g-score
+            int tentativeG = neighbor->distance + dir->travelTime +distanceToGoal;  // Assuming each step has cost 1
+            // If neighbor is new or a better path is found
+            if (neighbor->bestDistance > tentativeG) {
+                openSet.push(neighbor);
+            }
+        }
+    }
+
+    return {};  // Return empty path if no solution
 }
