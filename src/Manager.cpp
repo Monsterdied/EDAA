@@ -9,6 +9,7 @@
 #include <utility>
 #include <algorithm>
 #include <vector>
+#include <string>
 using namespace std;
 
 Manager::Manager(){
@@ -81,7 +82,7 @@ void Manager::ReadStations(const string& filename,string type) {
 }
 
 
-void Manager::ReadRoutesStops(const string& filename) {
+void Manager::ReadRoutesStops(const string& filename,string type) {
     ifstream file(filename);
     // the map stores for each trip_id the stop_id of the last stop
     unordered_map<string, string> PreviousStopId;
@@ -159,7 +160,7 @@ void Manager::ReadRoutesStops(const string& filename) {
                 int travelTime = departure_time->difference(*previousDepartureTime); // Calculate the time difference
                 // Create an edge with the time difference
                 //cout << "Edge created from " << startingStop->id << " to " << destinationStop->id <<"travelTime: "<<travelTime<< endl;
-                Edge* edge = new Edge(startingStop, destinationStop, departure_time,travelTime); // Create an edge object
+                Edge* edge = new Edge(startingStop, destinationStop, departure_time,travelTime,type); // Create an edge object
                 graph.addEdge(edge); // Add the edge to the graph
             } else {
                 cerr << "Error: Node not found for stating_stop_id: " << startingStopId << " or stop_id: " << stop_id <<"Sequence: "<<stop_sequence_int<< endl;
@@ -178,8 +179,29 @@ void Manager::ReadGIFST(const string& filename,string type){
     string stationsFile = filename + "/stops.txt";
     string routesFile = filename + "/stop_times.txt";
     ReadStations(stationsFile,type);
-    ReadRoutesStops(routesFile);
+    ReadRoutesStops(routesFile,type);
 }
+void Manager::printPath(const vector<Edge*>& path) const{
+    cout << "Shortest path:" <<path.size()<< endl; // Print the shortest path
+    int timeCounter = 0;
+    for (auto& edge : path) {
+        string startingNodeId = edge->startingNode != nullptr ? edge->startingNode->id : "start"; // Get the starting node ID
+        string destinationNodeId = edge->destinationNode != nullptr ? edge->destinationNode->id : "destination"; // Get the destination node ID
+        timeCounter += edge->travelTime; // Add the travel time to the counter
+        int minutes = edge->travelTime/60;
+        cout <<left<<std::setfill('-')<<setw(10)<< startingNodeId << "TravelTime: ";
+        string time;
+        if (minutes > 0) {
+            time = to_string(minutes) + " minutes ";
+        }
+        time += to_string(edge->travelTime%60) + " seconds"; // Print the travel time
+        cout <<left<<std::setfill('-')<<setw(25)<< time;
+        cout<<"type: "<< edge->type<<" ---> " << destinationNodeId << endl<<endl;
+    }
+    int minutes1 = timeCounter/60;
+    cout<<"Traveled Time: "<<minutes1 << " minutes " <<timeCounter%60 << " seconds"<<endl; // Print the path
+}
+
 struct node_cmp
 {
    bool operator()( const Node* a, const Node* b ) const 
@@ -187,19 +209,25 @@ struct node_cmp
     return a->bestDistance < b->bestDistance;
    }
 };
-
+double A_star_heuristic(const Node* currNode, const Coordinates goal,const Edge* edge= nullptr,const int a_star_multiplier=1.5){
+    if(edge == nullptr){
+        return currNode->coordinates.haversineDistance(goal)*a_star_multiplier + currNode->distance;
+    }
+    return currNode->coordinates.haversineDistance(goal)*a_star_multiplier+edge->travelTime + currNode->distance;
+}
 vector<Edge*> Manager::shortestPath(const Coordinates& start, const Coordinates& goal,double max_tentative) const{
+    vector<Edge*> path; // Vector to store the path
+    const int a_star_multiplier=1.5;
     Point3D startPoint = kdTree.nearestNeighbor(start.toPoint3D()); // Get the closest node to the start coordinates
     Node* startNode = graph.getNode(startPoint.id); // Get the node from the graph using the ID // Set the distance of the start node to 0
     Node* bestPoint =startNode;
     Node* closestNode =startNode;
     startNode->visited = true;
-    cout <<"cords1:"<< startNode->coordinates.getCoordinates().first<<" "<< startNode->coordinates.getCoordinates().second<<endl;
-    cout <<"cords2:"<< goal.getCoordinates().first<<" "<< goal.getCoordinates().second<<endl;
-    double bestDistance = startNode->coordinates.haversineDistance(goal); // Set the best distance to the goal coordinates
+    startNode->distance = startNode->coordinates.haversineDistance(start); // Set the distance of the start node to the distance to the goal
+    cout<<"Nearest node: "<<startNode->id<<" At distance: "<<startNode->distance<<" Distance to goal :"<<startNode->coordinates.haversineDistance(goal)<<" m"<<endl;
+    double bestDistance = A_star_heuristic(startNode,goal,nullptr,a_star_multiplier); // Set the best distance to the goal coordinates
     // Priority queue (open set)
     priority_queue<Node*, vector<Node*>, node_cmp> openSet;
-    vector<Edge*> path; // Vector to store the path
     bestPoint->bestDistance = bestPoint->coordinates.haversineDistance(goal); // Set the best distance to the goal coordinates
     // Create start node
     openSet.push(startNode);
@@ -212,7 +240,6 @@ vector<Edge*> Manager::shortestPath(const Coordinates& start, const Coordinates&
         }
         Node* current = openSet.top();
         Coordinates currentCords = current->coordinates; // Get the current node
-        double distance = currentCords.haversineDistance(goal); // Calculate the distance to the goal
         openSet.pop();
         // Explore neighbors
         vector<Edge*> directions = graph.getAdjacentEdges(current->id);
@@ -221,18 +248,19 @@ vector<Edge*> Manager::shortestPath(const Coordinates& start, const Coordinates&
             if (neighbor->visited) {
                 continue; // Skip if the neighbor has already been visited
             }
-            cout<< "Test2"<<endl;
-            int distanceToGoal = neighbor->coordinates.haversineDistance(goal); // Calculate the distance to the goal
+            //cout<< "Test2"<<endl;
+            double distanceToGoal = neighbor->coordinates.haversineDistance(goal); // Calculate the distance to the goal
             // Calculate tentative g-score
-            int tentativeG = current->distance + dir->travelTime +distanceToGoal; 
+            double tentativeG = A_star_heuristic(current,goal,dir,a_star_multiplier); // Calculate the tentative g-score
             // If neighbor is new or a better path is found
+            //cout << "test " << tentativeG<<endl;
             if (neighbor->bestDistance > tentativeG) {
                 neighbor->distance = current->distance + dir->travelTime;
                 neighbor->bestDistance = tentativeG; // Update the best distance
                 neighbor->previous = dir; // Set the previous edge
                 neighbor->visited = true; // Mark the neighbor as visited Dont use neighboor
                 openSet.push(neighbor);
-                cout<< "Test3"<<endl;
+                //cout<< "Test3"<<endl;
                 if(neighbor->bestDistance < bestDistance){
                     bestDistance = neighbor->bestDistance; // Update the best distance
                     closestNode = neighbor; // Update the closest node
@@ -242,12 +270,14 @@ vector<Edge*> Manager::shortestPath(const Coordinates& start, const Coordinates&
     }
     cout << "No Perfect path found." << endl; // Print if no path is found
     Edge* edge = closestNode->previous; // Get the previous edge
+    path.push_back(new Edge(closestNode, nullptr, nullptr,closestNode->coordinates.haversineDistance(goal)*a_star_multiplier,"foot"));
     while (edge != nullptr) {
-        cout << "Closest node: " << closestNode->id << endl; // Print the closest node ID
+        //cout << "Closest node: " << closestNode->id << endl; // Print the closest node ID
         path.push_back(edge); // Add the current node to the path
         closestNode = edge->startingNode; // Get the starting node of the edge
         edge = closestNode->previous; // Get the previous edge
     }
+    path.push_back(new Edge(nullptr,closestNode, nullptr,closestNode->distance*a_star_multiplier,"foot"));
     reverse(path.begin(), path.end());
     return path;
 }

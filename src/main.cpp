@@ -25,10 +25,6 @@ int main(){
     cout << "Elapsed time: " << elapsed.count() << " seconds" << endl; // Print the elapsed time
     cout << "Nearest neighbor ID: " << point.id << endl; // Print the ID of the nearest neighbor
     vector<Edge*> nodes = manager.shortestPath(Coordinates(-8.5899362,41.1465865),Coordinates(-8.6370783,41.167322)); // Find the shortest path between two coordinates
-    cout << "Shortest path:" <<nodes.size()<< endl; // Print the shortest path
-
-    for (auto& edge : nodes) {
-        cout << edge->startingNode->id << "----"<< edge->travelTime <<" -> " << edge->destinationNode->id << endl; // Print the path
-    }
+    manager.printPath(nodes); // Print the path
     return 0;
 }

@@ -15,7 +15,8 @@ class Edge {
         Time* time; // Date associated with the edge
         int travelTime; // Travel time in seconds
         Node* destinationNode; // Destination node of the edge
-        Edge(Node* startingNode, Node* destinationNode,Time* date,int travelTime); // Constructor to initialize the edge
+        string type;
+        Edge(Node* startingNode, Node* destinationNode,Time* time,int travelTime,string type); // Constructor to initialize the edge
 };
 
 
