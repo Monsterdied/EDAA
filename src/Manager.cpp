@@ -192,6 +192,11 @@ vector<Edge*> Manager::shortestPath(const Coordinates& start, const Coordinates&
     Point3D startPoint = kdTree.nearestNeighbor(start.toPoint3D()); // Get the closest node to the start coordinates
     Node* startNode = graph.getNode(startPoint.id); // Get the node from the graph using the ID // Set the distance of the start node to 0
     Node* bestPoint =startNode;
+    Node* closestNode =startNode;
+    startNode->visited = true;
+    cout <<"cords1:"<< startNode->coordinates.getCoordinates().first<<" "<< startNode->coordinates.getCoordinates().second<<endl;
+    cout <<"cords2:"<< goal.getCoordinates().first<<" "<< goal.getCoordinates().second<<endl;
+    double bestDistance = startNode->coordinates.haversineDistance(goal); // Set the best distance to the goal coordinates
     // Priority queue (open set)
     priority_queue<Node*, vector<Node*>, node_cmp> openSet;
     vector<Edge*> path; // Vector to store the path
@@ -207,21 +212,8 @@ vector<Edge*> Manager::shortestPath(const Coordinates& start, const Coordinates&
         }
         Node* current = openSet.top();
         Coordinates currentCords = current->coordinates; // Get the current node
-        int distance = currentCords.haversineDistance(goal); // Calculate the distance to the goal
+        double distance = currentCords.haversineDistance(goal); // Calculate the distance to the goal
         openSet.pop();
-
-        // Get the closest node to the goal coordinates
-        if (distance == 0) {
-            // Reconstruct path
-            while (current != nullptr) {
-                Edge* edge = current->previous; // Get the previous edge
-                path.push_back(edge); // Add the current node to the path
-                current = edge->startingNode; // Get the starting node of the edge
-            }
-            reverse(path.begin(), path.end());
-            return path;
-        }
-
         // Explore neighbors
         vector<Edge*> directions = graph.getAdjacentEdges(current->id);
         for (const auto& dir : directions) {
@@ -229,15 +221,33 @@ vector<Edge*> Manager::shortestPath(const Coordinates& start, const Coordinates&
             if (neighbor->visited) {
                 continue; // Skip if the neighbor has already been visited
             }
+            cout<< "Test2"<<endl;
             int distanceToGoal = neighbor->coordinates.haversineDistance(goal); // Calculate the distance to the goal
             // Calculate tentative g-score
-            int tentativeG = neighbor->distance + dir->travelTime +distanceToGoal;  // Assuming each step has cost 1
+            int tentativeG = current->distance + dir->travelTime +distanceToGoal; 
             // If neighbor is new or a better path is found
             if (neighbor->bestDistance > tentativeG) {
+                neighbor->distance = current->distance + dir->travelTime;
+                neighbor->bestDistance = tentativeG; // Update the best distance
+                neighbor->previous = dir; // Set the previous edge
+                neighbor->visited = true; // Mark the neighbor as visited Dont use neighboor
                 openSet.push(neighbor);
+                cout<< "Test3"<<endl;
+                if(neighbor->bestDistance < bestDistance){
+                    bestDistance = neighbor->bestDistance; // Update the best distance
+                    closestNode = neighbor; // Update the closest node
+                }
             }
         }
     }
-
-    return {};  // Return empty path if no solution
+    cout << "No Perfect path found." << endl; // Print if no path is found
+    Edge* edge = closestNode->previous; // Get the previous edge
+    while (edge != nullptr) {
+        cout << "Closest node: " << closestNode->id << endl; // Print the closest node ID
+        path.push_back(edge); // Add the current node to the path
+        closestNode = edge->startingNode; // Get the starting node of the edge
+        edge = closestNode->previous; // Get the previous edge
+    }
+    reverse(path.begin(), path.end());
+    return path;
 }

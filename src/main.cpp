@@ -13,7 +13,7 @@ int main(){
     Manager manager; // Create a Manager object
     manager.ReadGIFST("../data/MetroDoPorto","metro"); // Read the GIFST data from a file
     manager.ReadGIFST("../data/STCP","autocarro"); // Read the GIFST data from a file
-    manager.ReadGIFST("../data/mdb-2027-202504140043","comboio");
+    //manager.ReadGIFST("../data/mdb-2027-202504140043","comboio");
     //manager.ReadGIFST("../data/tld-651-202504210112");
     manager.buildKDTree(); // Build a KD-Tree from the graph data
 
@@ -24,5 +24,11 @@ int main(){
     std::chrono::duration<double> elapsed = end - start; // Calculate the elapsed time
     cout << "Elapsed time: " << elapsed.count() << " seconds" << endl; // Print the elapsed time
     cout << "Nearest neighbor ID: " << point.id << endl; // Print the ID of the nearest neighbor
+    vector<Edge*> nodes = manager.shortestPath(Coordinates(-8.5899362,41.1465865),Coordinates(-8.6370783,41.167322)); // Find the shortest path between two coordinates
+    cout << "Shortest path:" <<nodes.size()<< endl; // Print the shortest path
+
+    for (auto& edge : nodes) {
+        cout << edge->startingNode->id << "----"<< edge->travelTime <<" -> " << edge->destinationNode->id << endl; // Print the path
+    }
     return 0;
 }
