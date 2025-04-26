@@ -6,17 +6,24 @@
 #include <memory>
 #include "../include/Coordinates.h" // Assuming this is the path to your Coordinates.h
 #include "../include/KDtree.h" // Assuming this is the path to your KDtree.h
+#include <queue>
 
 
+double distance(const Point3D& p1, const Point3D& p2) {
+    double dx = p1.x - p2.x;
+    double dy = p1.y - p2.y;
+    double dz = p1.z - p2.z;
+    return sqrt(dx * dx + dy * dy + dz * dz);
+}
 // Recursive build function
-std::unique_ptr<KDNode> KDTree::buildTree(std::vector<Point3D>& points, int depth) {
+unique_ptr<KDNode> KDTree::buildTree(vector<Point3D>& points, int depth) {
     if (points.empty()) return nullptr;
 
     int axis = depth % 3; // Cycle through x, y, z
     size_t median_idx = points.size() / 2;
 
     // Sort and find median
-    std::nth_element(
+    nth_element(
         points.begin(), 
         points.begin() + median_idx, 
         points.end(),
@@ -28,11 +35,11 @@ std::unique_ptr<KDNode> KDTree::buildTree(std::vector<Point3D>& points, int dept
     );
 
     // Create node
-    auto node = std::make_unique<KDNode>(points[median_idx], axis);
+    auto node = make_unique<KDNode>(points[median_idx], axis);
     
     // Recursively build subtrees
-    auto left_points = std::vector<Point3D>(points.begin(), points.begin() + median_idx);
-    auto right_points = std::vector<Point3D>(points.begin() + median_idx + 1, points.end());
+    auto left_points = vector<Point3D>(points.begin(), points.begin() + median_idx);
+    auto right_points = vector<Point3D>(points.begin() + median_idx + 1, points.end());
 
     node->left = buildTree(left_points, depth + 1);
     node->right = buildTree(right_points, depth + 1);
@@ -41,21 +48,17 @@ std::unique_ptr<KDNode> KDTree::buildTree(std::vector<Point3D>& points, int dept
 }
 
 // Recursive nearest neighbor search
-void KDTree::nearestNeighbor(const KDNode* node, const Point3D& query, Point3D& best_point, double& best_dist,int depth) const {
+void KDTree::nearestNeighbor(const KDNode* node, const Point3D& query, Point3D& best_point, double& best_dist) const {
     if (!node) return;
 
-    double dist = std::sqrt(
-        std::pow(query.x - node->point.x, 2) +
-        std::pow(query.y - node->point.y, 2) +
-        std::pow(query.z - node->point.z, 2)
-    );
+    double dist = distance(query, node->point);
 
     if (dist < best_dist) {
         best_dist = dist;
         best_point = node->point;
     }
 
-    int axis = depth % 3;
+    int axis = node->axis;
     double diff;
     if (axis == 0) diff = query.x - node->point.x;
     else if (axis == 1) diff = query.y - node->point.y;
@@ -64,20 +67,69 @@ void KDTree::nearestNeighbor(const KDNode* node, const Point3D& query, Point3D& 
     KDNode* near = diff <= 0 ? node->left.get() : node->right.get();
     KDNode* far = diff <= 0 ? node->right.get() : node->left.get();
 
-    nearestNeighbor(near, query, best_point, best_dist, depth + 1);
+    nearestNeighbor(near, query, best_point, best_dist);
 
-    if (std::abs(diff) < best_dist) {
-        nearestNeighbor(far, query, best_point, best_dist, depth + 1);
+    if (abs(diff) < best_dist) {
+        nearestNeighbor(far, query, best_point, best_dist);
     }
 }
 
-KDTree::KDTree(std::vector<Point3D> points) {
+KDTree::KDTree(vector<Point3D> points) {
     root = buildTree(points, 0);
 }
 
 Point3D KDTree::nearestNeighbor(const Point3D& query) const {
     Point3D best_point;
-    double best_dist = std::numeric_limits<double>::max();
-    nearestNeighbor(root.get(), query, best_point, best_dist, 0);
+    double best_dist = numeric_limits<double>::max();
+    nearestNeighbor(root.get(), query, best_point, best_dist);
     return best_point;
+}
+
+// K Nearest Neighbors
+
+struct node_cmp
+{
+    bool operator()( const pair<double,Point3D> a, const pair<double,Point3D> b ) const
+    {
+        return a.first < b.first;
+    }
+};
+// Recursive nearest neighbor search
+void KDTree::nearestKNeighbor(const KDNode* node,const int k ,const Point3D& query,priority_queue<PointDistancePair>& best_points) const {
+    if (!node) return;
+
+    double dist = distance(query, node->point);
+    //update priority list
+
+    if (size(best_points)< k) {
+        best_points.push(PointDistancePair{dist, node->point});
+    }
+
+    int axis = node->axis;
+    double diff;
+    if (axis == 0) diff = query.x - node->point.x;
+    else if (axis == 1) diff = query.y - node->point.y;
+    else diff = query.z - node->point.z;
+
+    KDNode* near = diff <= 0 ? node->left.get() : node->right.get();
+    KDNode* far = diff <= 0 ? node->right.get() : node->left.get();
+
+    nearestKNeighbor(near, k,query, best_points);
+
+    if (best_points.size() < k || std::abs(diff) < best_points.top().distance) {
+        // The hyperplane could contain a point closer than the current k-th nearest,
+        // so search the "far" child.
+        nearestKNeighbor(far, k, query,best_points);
+    }
+}
+vector<Point3D> KDTree::kNearestNeighbors(const Point3D& query, int k) const{
+    priority_queue<PointDistancePair> best_points;
+    nearestKNeighbor(root.get(),k, query, best_points);
+    vector<Point3D> points;
+    while(!best_points.empty()){
+        points.push_back(best_points.top().point);
+        best_points.pop();
+    }
+    return points;
+
 }

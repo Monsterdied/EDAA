@@ -202,32 +202,22 @@ void Manager::printPath(const vector<Edge*>& path) const{
     cout<<"Traveled Time: "<<minutes1 << " minutes " <<timeCounter%60 << " seconds"<<endl; // Print the path
 }
 
-struct node_cmp
-{
-   bool operator()( const Node* a, const Node* b ) const 
-   {
-    return a->bestDistance < b->bestDistance;
-   }
-};
-double A_star_heuristic(const Node* currNode, const Coordinates goal,const Edge* edge= nullptr,const int a_star_multiplier=1.5){
+double A_star_heuristic(const Node* currNode, const Coordinates goal,const Edge* edge= nullptr,const int a_star_multiplier=1.5,const Time* currTime= nullptr){
     if(edge == nullptr){
         return currNode->coordinates.haversineDistance(goal)*a_star_multiplier + currNode->distance;
     }
     return currNode->coordinates.haversineDistance(goal)*a_star_multiplier+edge->travelTime + currNode->distance;
 }
-vector<Edge*> Manager::shortestPath(const Coordinates& start, const Coordinates& goal,double max_tentative) const{
+vector<Edge*> Manager::shortestPathAstar(Node* startNode, const Coordinates& goal,double max_tentative) const{
     vector<Edge*> path; // Vector to store the path
     const int a_star_multiplier=1.5;
-    Point3D startPoint = kdTree.nearestNeighbor(start.toPoint3D()); // Get the closest node to the start coordinates
-    Node* startNode = graph.getNode(startPoint.id); // Get the node from the graph using the ID // Set the distance of the start node to 0
     Node* bestPoint =startNode;
     Node* closestNode =startNode;
     startNode->visited = true;
-    startNode->distance = startNode->coordinates.haversineDistance(start); // Set the distance of the start node to the distance to the goal
-    cout<<"Nearest node: "<<startNode->id<<" At distance: "<<startNode->distance<<" Distance to goal :"<<startNode->coordinates.haversineDistance(goal)<<" m"<<endl;
+    startNode->distance = startNode->coordinates.haversineDistance(startNode->coordinates); // Set the distance of the start node to the distance to the goal
     double bestDistance = A_star_heuristic(startNode,goal,nullptr,a_star_multiplier); // Set the best distance to the goal coordinates
     // Priority queue (open set)
-    priority_queue<Node*, vector<Node*>, node_cmp> openSet;
+    priority_queue<Node*> openSet;
     bestPoint->bestDistance = bestPoint->coordinates.haversineDistance(goal); // Set the best distance to the goal coordinates
     // Create start node
     openSet.push(startNode);
@@ -270,14 +260,44 @@ vector<Edge*> Manager::shortestPath(const Coordinates& start, const Coordinates&
     }
     cout << "No Perfect path found." << endl; // Print if no path is found
     Edge* edge = closestNode->previous; // Get the previous edge
-    path.push_back(new Edge(closestNode, nullptr, nullptr,closestNode->coordinates.haversineDistance(goal)*a_star_multiplier,"foot"));
+    Node* finalGoal =new Node("goal",goal.latitude,goal.longitude);
+    finalGoal->distance = closestNode->distance + closestNode->coordinates.haversineDistance(goal); // Set the distance of the goal node
+    cout<<"Final goal: "<<finalGoal->distance<<endl;
+    path.push_back(new Edge(closestNode, finalGoal, nullptr,closestNode->coordinates.haversineDistance(goal)*a_star_multiplier,"foot"));
     while (edge != nullptr) {
         //cout << "Closest node: " << closestNode->id << endl; // Print the closest node ID
         path.push_back(edge); // Add the current node to the path
         closestNode = edge->startingNode; // Get the starting node of the edge
         edge = closestNode->previous; // Get the previous edge
     }
-    path.push_back(new Edge(nullptr,closestNode, nullptr,closestNode->distance*a_star_multiplier,"foot"));
+
     reverse(path.begin(), path.end());
     return path;
+}
+bool sortPaths(const pair<double, vector<Edge*>>& a, const pair<double, vector<Edge*>>& b){
+    return a.first < b.first;
+}
+vector<pair<double,vector<Edge*>>> Manager::shortestPath(const Coordinates& start, const Coordinates& goal,double max_tentative,const int alternatives,const float a_star_multiplier) const{
+    vector<Point3D> nearestNodes= kdTree.kNearestNeighbors(start.toPoint3D(), alternatives); // Get the k nearest neighbors
+    vector<Node*> startNodes;
+    for (const Point3D node : nearestNodes){
+        Node* startNode = graph.getNode(node.id); // Get the node from the graph using the ID
+        startNodes.push_back(startNode); // Add the node to the vector
+    }
+
+    vector<pair<double,vector<Edge*>>> result;
+
+    for(Node* station : startNodes){
+        vector<Edge*> path = shortestPathAstar(station,goal,max_tentative); // Find the shortest path
+        Node* closestNode = path.front()->startingNode;
+        path.insert(path.begin(), new Edge(nullptr,closestNode, nullptr,closestNode->distance*a_star_multiplier,"foot"));
+        // get distance of the last edge
+        Node* last = path.back()->destinationNode; // Get the last edge
+        double distance = last->distance;
+        cout << "Distance1: " << distance << endl; // Print the distance
+        result.push_back(make_pair(distance,path)); // Add the distance and path to the result
+
+    }
+    std::sort(result.begin(), result.end(),sortPaths);
+    return result; // Return the result
 }

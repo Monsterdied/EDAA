@@ -11,20 +11,40 @@ int main(){
 
 
     Manager manager; // Create a Manager object
-    manager.ReadGIFST("../data/MetroDoPorto","metro"); // Read the GIFST data from a file
     manager.ReadGIFST("../data/STCP","autocarro"); // Read the GIFST data from a file
+    manager.ReadGIFST("../data/MetroDoPorto","metro"); // Read the GIFST data from a file
+
     //manager.ReadGIFST("../data/mdb-2027-202504140043","comboio");
     //manager.ReadGIFST("../data/tld-651-202504210112");
     manager.buildKDTree(); // Build a KD-Tree from the graph data
 
     //time
+    vector<pair<double,vector<Edge*>>> nodes= manager.shortestPath(Coordinates(-8.6190758,41.1570994),Coordinates(-8.5984257,41.1783583)); // Find the shortest path between two coordinates
+    int counter = 0;
+    manager.printPath(nodes[0].second); // Print the path
+    for (auto& node : nodes) {
+        counter++;
+        cout << "Node " << counter << ": " << node.second.back()->destinationNode->id << endl; // Print the node ID
+        cout << "Distance: " << node.first << endl; // Print the distance
+    }
+
+    //test nearest neighbors
+
+    /*
     auto start = std::chrono::high_resolution_clock::now(); // Start the timer
-    Point3D point = manager.kdTree.nearestNeighbor(Point3D(0,0,0)); // Find the nearest neighbor to a given point
+    Point3D point = manager.kdTree.nearestNeighbor(Coordinates(-8.6190758,41.1570994).toPoint3D()); // Find the nearest neighbor to a given point
     auto end = std::chrono::high_resolution_clock::now(); // End the timer
     std::chrono::duration<double> elapsed = end - start; // Calculate the elapsed time
     cout << "Elapsed time: " << elapsed.count() << " seconds" << endl; // Print the elapsed time
-    cout << "Nearest neighbor ID: " << point.id << endl; // Print the ID of the nearest neighbor
-    vector<Edge*> nodes = manager.shortestPath(Coordinates(-8.5899362,41.1465865),Coordinates(-8.6370783,41.167322)); // Find the shortest path between two coordinates
-    manager.printPath(nodes); // Print the path
+    cout << "Nearest neighbor ID: " << point.id << endl; // Print the ID of the nearest neighbor,
+
+    auto start1 = std::chrono::high_resolution_clock::now(); // Start the timer
+    vector<Point3D> points = manager.kdTree.kNearestNeighbors(Coordinates(-8.6190758,41.1570994).toPoint3D(), 5); // Find the k nearest neighbors to a given point
+    auto end1 = std::chrono::high_resolution_clock::now(); // End the timer
+    std::chrono::duration<double> elapsed1 = end1 - start1; // Calculate the elapsed time
+    cout << "Elapsed time: " << elapsed1.count() << " seconds" << endl; // Print the elapsed time
+    for (const auto& p : points) {
+        cout << "K Nearest neighbor ID: " << p.id << endl; // Print the ID of the k nearest neighbors
+    }*/
     return 0;
 }

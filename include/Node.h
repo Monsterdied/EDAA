@@ -26,6 +26,12 @@ class Node {
         double bestDistance = std::numeric_limits<double>::max(); // Best distance to the node
         Node(const string& id, double latitude, double longitude, string name = "", string type = "", string code = ""); // Constructor to initialize the node
         Point3D toPoint3D() const; // Convert to Point3D
+        bool operator<(const Node& other) const {
+            if (bestDistance != other.bestDistance) {
+                return bestDistance < other.bestDistance; // Lower priority comes first
+            }
+            return name < other.name;
+        }
 };
 
 

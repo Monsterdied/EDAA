@@ -13,10 +13,9 @@ struct Point3D {
 
 // Convert latitude/longitude (degrees) to 3D Cartesian
 class Coordinates {
-    private:
+    public:
     double longitude = 0.0;
     double latitude = 0.0;
-    public:
     Coordinates() = default;
     Coordinates(double longitude, double latitude);
     Coordinates(const Point3D point);
