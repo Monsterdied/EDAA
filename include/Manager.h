@@ -14,6 +14,7 @@ class Manager {
         Graph graph; // Graph object to manage the graph
         void ReadStations(const string& filename,string type);
         void ReadRoutesStops(const string& filename,string type);
+        vector<Edge*> getKNearestFootEdges(Node* node, int k) const;
 
     public:
         //public for testing purposes

@@ -202,6 +202,22 @@ void Manager::printPath(const vector<Edge*>& path) const{
     cout<<"Traveled Time: "<<minutes1 << " minutes " <<timeCounter%60 << " seconds"<<endl; // Print the path
 }
 
+vector<Edge*> Manager::getKNearestFootEdges(Node* node, int k)const {
+    vector<Point3D> footEdges = kdTree.kNearestNeighbors(node->toPoint3D(), k); // Get the k nearest foot edges
+    vector<Edge*> footEdgesVector;
+    for (const auto& footEdge : footEdges) {
+        Node* footNode = graph.getNode(footEdge.id); // Get the foot node from the graph using the ID
+        if (footNode != nullptr) {
+            double distance = node->coordinates.haversineDistance(footNode->coordinates); // Calculate the distance to the foot node
+
+            Edge* edge = new Edge(node, footNode, nullptr, distance, "foot"); // Create a new edge with the foot node
+            footEdgesVector.push_back(edge); // Add the edge to the vector
+        }
+    }
+    return footEdgesVector; // Return the vector of foot edges
+}
+
+
 double A_star_heuristic(const Node* currNode, const Coordinates goal,const Edge* edge= nullptr,const int a_star_multiplier=1.5,const Time* currTime= nullptr){
     if(edge == nullptr){
         return currNode->coordinates.haversineDistance(goal)*a_star_multiplier + currNode->distance;
@@ -233,6 +249,8 @@ vector<Edge*> Manager::shortestPathAstar(Node* startNode, const Coordinates& goa
         openSet.pop();
         // Explore neighbors
         vector<Edge*> directions = graph.getAdjacentEdges(current->id);
+        vector<Edge*> footDirections =getKNearestFootEdges(current, 5); // Get the k nearest foot edges
+        //directions.insert(directions.end(), footDirections.begin(), footDirections.end()); // Add the foot edges to the directions
         for (const auto& dir : directions) {
             Node* neighbor = dir->destinationNode; // Get the neighboring node
             if (neighbor->visited) {
