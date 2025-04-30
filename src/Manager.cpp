@@ -1,5 +1,5 @@
 #include "../include/Manager.h"
-
+#include <regex>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -42,8 +42,14 @@ void Manager::ReadStations(const string& filename,string type) {
         istringstream iss(line);
         vector<string> vecLine;
         string header;
-        while(getline(iss, header, ',')) {
-            vecLine.push_back(header); // Store each header in a vector
+        regex field_re(R"((?:^|,)(?:\"([^\"]*)\"|([^,]*)))");
+        sregex_iterator it(line.begin(), line.end(), field_re);
+        sregex_iterator end;
+        for (; it != end; ++it) {
+            smatch match = *it;
+            // Use group 1 if quoted field matched, group 2 otherwise
+            string field = match[1].matched ? match[1].str() : match[2].str();
+            vecLine.push_back(field);
         }
 
         if (isHeader) {
@@ -276,7 +282,6 @@ vector<Edge*> Manager::shortestPathAstar(Node* startNode, const Coordinates& goa
             }
         }
     }
-    cout << "No Perfect path found." << endl; // Print if no path is found
     Edge* edge = closestNode->previous; // Get the previous edge
     Node* finalGoal =new Node("goal",goal.latitude,goal.longitude);
     finalGoal->distance = closestNode->distance + closestNode->coordinates.haversineDistance(goal); // Set the distance of the goal node
@@ -298,17 +303,21 @@ bool sortPaths(const pair<double, vector<Edge*>>& a, const pair<double, vector<E
 vector<pair<double,vector<Edge*>>> Manager::shortestPath(const Coordinates& start, const Coordinates& goal,double max_tentative,const int alternatives,const float a_star_multiplier) const{
     vector<Point3D> nearestNodes= kdTree.kNearestNeighbors(start.toPoint3D(), alternatives); // Get the k nearest neighbors
     vector<Node*> startNodes;
+    vector<int> distances_TMP;
     for (const Point3D node : nearestNodes){
         Node* startNode = graph.getNode(node.id); // Get the node from the graph using the ID
         startNodes.push_back(startNode); // Add the node to the vector
+        distances_TMP.push_back(startNode->coordinates.haversineDistance(start));
     }
 
     vector<pair<double,vector<Edge*>>> result;
-
+    int counter = -1;
     for(Node* station : startNodes){
+        counter++;
         vector<Edge*> path = shortestPathAstar(station,goal,max_tentative); // Find the shortest path
         Node* closestNode = path.front()->startingNode;
-        path.insert(path.begin(), new Edge(nullptr,closestNode, nullptr,closestNode->distance*a_star_multiplier,"foot"));
+        path.insert(path.begin(), new Edge(nullptr,closestNode, nullptr,
+            distances_TMP[counter]*a_star_multiplier,"foot"));
         // get distance of the last edge
         Node* last = path.back()->destinationNode; // Get the last edge
         double distance = last->distance;

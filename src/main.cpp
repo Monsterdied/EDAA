@@ -16,16 +16,16 @@ int main(){
 
     //manager.ReadGIFST("../data/mdb-2027-202504140043","comboio");
     //manager.ReadGIFST("../data/tld-651-202504210112");
+    //manager.ReadGIFST("../data/c1","c1");
+    manager.ReadGIFST("../data/c2","c2");
+    //manager.ReadGIFST("../data/c3","c3");
+    manager.ReadGIFST("../data/c4","c4");
     manager.buildKDTree(); // Build a KD-Tree from the graph data
 
     //time
     vector<pair<double,vector<Edge*>>> nodes= manager.shortestPath(Coordinates(-8.6190758,41.1570994),Coordinates(-8.5984257,41.1783583)); // Find the shortest path between two coordinates
-    int counter = 0;
-    manager.printPath(nodes[0].second); // Print the path
-    for (auto& node : nodes) {
-        counter++;
-        cout << "Node " << counter << ": " << node.second.back()->destinationNode->id << endl; // Print the node ID
-        cout << "Distance: " << node.first << endl; // Print the distance
+    for (int i = 1; i >=0; i--) {
+        manager.printPath(nodes[i].second); // Print the path
     }
 
     //test nearest neighbors
