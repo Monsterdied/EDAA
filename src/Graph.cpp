@@ -48,3 +48,10 @@ vector<Edge*> Graph::getAdjacentEdges(const string& nodeID) const{
         return vector<Edge*>(); // Return an empty vector if not found
     }
 }
+void Graph::reset() const{
+    //reset Nodes
+    for (auto it = nodes.begin(); it != nodes.end(); it++) {
+        Node* node = it->second;
+        node->reset();
+    }
+}

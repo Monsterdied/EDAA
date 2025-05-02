@@ -103,6 +103,9 @@ void KDTree::nearestKNeighbor(const KDNode* node,const int k ,const Point3D& que
 
     if (size(best_points)< k) {
         best_points.push(PointDistancePair{dist, node->point});
+    }else if (dist < best_points.top().distance) {
+        best_points.pop();
+        best_points.push(PointDistancePair{dist, node->point});
     }
 
     int axis = node->axis;

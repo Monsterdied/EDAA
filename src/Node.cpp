@@ -11,6 +11,12 @@ Node::Node(const string& id, double latitude, double longitude, string name, str
     this->type = type;
     this->code = code;
 }
+void Node::reset(){
+    distance =std::numeric_limits<int>::max(); // Distance from the start node
+    previous = nullptr; // Previous node in the path
+    visited = false; // Flag to check if the node has been visited
+    bestDistance = std::numeric_limits<int>::max(); // Best distance to the node
+}
 
 Point3D Node::toPoint3D() const{ // Create a Coordinates object
     Point3D point = this->coordinates.toPoint3D(); // Convert Coordinates to Point3D

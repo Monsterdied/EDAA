@@ -19,6 +19,7 @@ class Graph {
     public: 
         //void Graph(); // Constructor to initialize the graph
         void addNode(Node* node); // Function to add a node to the graph~
+        void reset()const ;
         unordered_map<string, Node*> getNodes() const; // Function to get all nodes in the graph
         Node* getNode(const string& id) const; // Function to get a node by its ID
         void addEdge(Edge* edge); // Function to add an edge between two nodes

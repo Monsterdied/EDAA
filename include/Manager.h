@@ -11,12 +11,12 @@ class Manager {
 
     private:
 
-        Graph graph; // Graph object to manage the graph
         void ReadStations(const string& filename,string type);
         void ReadRoutesStops(const string& filename,string type);
         vector<Edge*> getKNearestFootEdges(Node* node, int k) const;
 
     public:
+        Graph graph; // Graph object to manage the graph
         //public for testing purposes
         KDTree kdTree; // KD-Tree object for nearest neighbor search
         void ReadGIFST(const string& filename,string type); // Function to read GIFTS data from a file

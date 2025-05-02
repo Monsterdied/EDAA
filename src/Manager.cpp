@@ -193,16 +193,18 @@ void Manager::printPath(const vector<Edge*>& path) const{
     for (auto& edge : path) {
         string startingNodeId = edge->startingNode != nullptr ? edge->startingNode->id : "start"; // Get the starting node ID
         string destinationNodeId = edge->destinationNode != nullptr ? edge->destinationNode->id : "destination"; // Get the destination node ID
+        string startingName = graph.getNode(startingNodeId) != nullptr ? graph.getNode(startingNodeId)->name : "start"; // Get the starting node ID
+        string destinationName = graph.getNode(destinationNodeId) != nullptr ? graph.getNode(destinationNodeId)->name : "destination"; // Get the destination node ID
         timeCounter += edge->travelTime; // Add the travel time to the counter
         int minutes = edge->travelTime/60;
-        cout <<left<<std::setfill('-')<<setw(10)<< startingNodeId << "TravelTime: ";
+        cout <<left<<std::setfill('-')<<setw(30)<< startingName << "TravelTime: ";
         string time;
         if (minutes > 0) {
             time = to_string(minutes) + " minutes ";
         }
         time += to_string(edge->travelTime%60) + " seconds"; // Print the travel time
         cout <<left<<std::setfill('-')<<setw(25)<< time;
-        cout<<"type: "<< edge->type<<" ---> " << destinationNodeId << endl<<endl;
+        cout<<"type: "<< edge->type<<" ---> " << destinationName << endl<<endl;
     }
     int minutes1 = timeCounter/60;
     cout<<"Traveled Time: "<<minutes1 << " minutes " <<timeCounter%60 << " seconds"<<endl; // Print the path
@@ -282,6 +284,7 @@ vector<Edge*> Manager::shortestPathAstar(Node* startNode, const Coordinates& goa
             }
         }
     }
+    cout<<"router found"<<endl;
     Edge* edge = closestNode->previous; // Get the previous edge
     Node* finalGoal =new Node("goal",goal.latitude,goal.longitude);
     finalGoal->distance = closestNode->distance + closestNode->coordinates.haversineDistance(goal); // Set the distance of the goal node
@@ -314,15 +317,17 @@ vector<pair<double,vector<Edge*>>> Manager::shortestPath(const Coordinates& star
     int counter = -1;
     for(Node* station : startNodes){
         counter++;
+        graph.reset();
         vector<Edge*> path = shortestPathAstar(station,goal,max_tentative); // Find the shortest path
-        Node* closestNode = path.front()->startingNode;
-        path.insert(path.begin(), new Edge(nullptr,closestNode, nullptr,
+        cout<<"Station : "<<station->name<<endl;
+        path.insert(path.begin(), new Edge(nullptr,station, nullptr,
             distances_TMP[counter]*a_star_multiplier,"foot"));
         // get distance of the last edge
-        Node* last = path.back()->destinationNode; // Get the last edge
-        double distance = last->distance;
+        Node* last = path.front()->destinationNode; // Get the last edge
+        double distance = last->bestDistance + distances_TMP[counter]*a_star_multiplier;
         cout << "Distance1: " << distance << endl; // Print the distance
         result.push_back(make_pair(distance,path)); // Add the distance and path to the result
+        printPath(path);
 
     }
     std::sort(result.begin(), result.end(),sortPaths);

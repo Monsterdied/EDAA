@@ -11,7 +11,7 @@ int main(){
 
 
     Manager manager; // Create a Manager object
-    manager.ReadGIFST("../data/STCP","autocarro"); // Read the GIFST data from a file
+    //manager.ReadGIFST("../data/STCP","autocarro"); // Read the GIFST data from a file
     manager.ReadGIFST("../data/MetroDoPorto","metro"); // Read the GIFST data from a file
 
     //manager.ReadGIFST("../data/mdb-2027-202504140043","comboio");
@@ -19,14 +19,27 @@ int main(){
     //manager.ReadGIFST("../data/c1","c1");
     manager.ReadGIFST("../data/c2","c2");
     //manager.ReadGIFST("../data/c3","c3");
-    manager.ReadGIFST("../data/c4","c4");
+    //manager.ReadGIFST("../data/c4","c4");
     manager.buildKDTree(); // Build a KD-Tree from the graph data
 
     //time
-    vector<pair<double,vector<Edge*>>> nodes= manager.shortestPath(Coordinates(-8.6190758,41.1570994),Coordinates(-8.5984257,41.1783583)); // Find the shortest path between two coordinates
+    //
+    /*
+    vector<Point3D> nodes = manager.kdTree.kNearestNeighbors(Coordinates(-8.6190758,41.1570994).toPoint3D(),7);
+    for (Point3D point : nodes) {
+        Node* node = manager.graph.getNode(point.id);
+        cout<<"node "<<node->name<<"id "<<node->id<<endl;
+    }*/
+
+    auto timeStart = chrono::high_resolution_clock::now();
+    vector<pair<double,vector<Edge*>>> nodes= manager.shortestPath(Coordinates(-8.6190758,41.1570994),Coordinates(-8.5984257,41.1783583),9000000); // Find the shortest path between two coordinates
+    auto timeEnd = chrono::high_resolution_clock::now();
+    auto deltaTime = chrono::duration_cast<chrono::seconds>(timeEnd - timeStart);
+
     for (int i = 1; i >=0; i--) {
         manager.printPath(nodes[i].second); // Print the path
     }
+    cout<<"Time taken: "<<deltaTime.count()/60<<" Minutes "<<deltaTime.count()%60<<" seconds" << endl;
 
     //test nearest neighbors
 
