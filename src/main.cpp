@@ -11,7 +11,7 @@ int main(){
 
 
     Manager manager; // Create a Manager object
-    //manager.ReadGIFST("../data/STCP","autocarro"); // Read the GIFST data from a file
+    manager.ReadGIFST("../data/STCP","autocarro"); // Read the GIFST data from a file
     manager.ReadGIFST("../data/MetroDoPorto","metro"); // Read the GIFST data from a file
 
     //manager.ReadGIFST("../data/mdb-2027-202504140043","comboio");

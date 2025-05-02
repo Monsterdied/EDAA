@@ -327,7 +327,7 @@ vector<pair<double,vector<Edge*>>> Manager::shortestPath(const Coordinates& star
         double distance = last->bestDistance + distances_TMP[counter]*a_star_multiplier;
         cout << "Distance1: " << distance << endl; // Print the distance
         result.push_back(make_pair(distance,path)); // Add the distance and path to the result
-        printPath(path);
+        //printPath(path);
 
     }
     std::sort(result.begin(), result.end(),sortPaths);
