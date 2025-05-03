@@ -38,6 +38,9 @@ void Manager::ReadStations(const string& filename,string type) {
     int lineCount = 0; // Initialize line count
     while (getline(file, line)) {
         lineCount++; // Increment line count
+        if(lineCount % 100000 == 0) {
+            cout << "Processed " << lineCount << " Nodes." << endl; // Print progress every 1000 lines
+        }
         //cout << lineCount << flush;
         istringstream iss(line);
         vector<string> vecLine;

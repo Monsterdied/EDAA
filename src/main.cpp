@@ -17,9 +17,10 @@ int main(){
     //manager.ReadGIFST("../data/mdb-2027-202504140043","comboio");
     //manager.ReadGIFST("../data/tld-651-202504210112");
     //manager.ReadGIFST("../data/c1","c1");
-    manager.ReadGIFST("../data/c2","c2");
+    //manager.ReadGIFST("../data/c2","c2");
     //manager.ReadGIFST("../data/c3","c3");
-    manager.ReadGIFST("../data/c4","c4");
+    //manager.ReadGIFST("../data/c4","c4");
+    manager.ReadGIFST("../data/germany","germany");
     manager.buildKDTree(); // Build a KD-Tree from the graph data
 
     //time
