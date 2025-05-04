@@ -38,7 +38,7 @@ void Manager::ReadStations(const string& filename,string type) {
     int lineCount = 0; // Initialize line count
     while (getline(file, line)) {
         lineCount++; // Increment line count
-        if(lineCount % 100000 == 0) {
+        if(lineCount % 10000 == 0) {
             cout << "Processed " << lineCount << " Nodes." << endl; // Print progress every 1000 lines
         }
         //cout << lineCount << flush;
@@ -78,7 +78,7 @@ void Manager::ReadStations(const string& filename,string type) {
 
         // Parse the CSV line
         //cout <<endl<<""<<endl<<"stop_name:"<< vecLine[stop_name_idx]<<endl<<"stop_id:"<< vecLine[stop_id_idx]<<endl<<"longitude:"<< vecLine[stop_lon_idx]<<endl<<"latitude:"<< vecLine[stop_lat_idx]<<endl;
-        stop_id = vecLine[stop_id_idx]; // Get the stop_id from the vector
+        stop_id = type + vecLine[stop_id_idx]; // Get the stop_id from the vector
         stop_lon = stod(vecLine[stop_lon_idx]); // Get the stop_code from the vector
         stop_name = vecLine[stop_name_idx]; // Get the stop_name from the vector
         stop_lat = stod(vecLine[stop_lat_idx]); // Get the stop_desc from the vector
@@ -141,7 +141,7 @@ void Manager::ReadRoutesStops(const string& filename,string type) {
 
         // Parse the CSV line
         trip_id = vecLine[trip_id_idx]; // Get the trip_id from the vector
-        stop_id = vecLine[stop_id_idx]; // Get the stop_id from the vector
+        stop_id = type+vecLine[stop_id_idx]; // Get the stop_id from the vector
         stop_sequence = vecLine[stop_sequence_idx]; // Get the stop_sequence from the vector
         departure_time_str = vecLine[departure_time_str_idx]; // Get the departure_time from the vector
         arrival_time = vecLine[arrival_time_idx]; // Get the arrival_time from the vector
@@ -322,13 +322,16 @@ vector<pair<double,vector<Edge*>>> Manager::shortestPath(const Coordinates& star
         counter++;
         graph.reset();
         vector<Edge*> path = shortestPathAstar(station,goal,max_tentative); // Find the shortest path
-        cout<<"Station : "<<station->name<<endl;
+        cout<<"\nStation : "<<station->name<<endl;
         path.insert(path.begin(), new Edge(nullptr,station, nullptr,
             distances_TMP[counter]*a_star_multiplier,"foot"));
         // get distance of the last edge
         Node* last = path.front()->destinationNode; // Get the last edge
         double distance = last->bestDistance + distances_TMP[counter]*a_star_multiplier;
-        cout << "Distance1: " << distance << endl; // Print the distance
+        cout << "All distance : " << distance << endl; // Print the distance
+        cout<<"Distance to lap :" <<distances_TMP[counter]*a_star_multiplier<<endl;
+
+
         result.push_back(make_pair(distance,path)); // Add the distance and path to the result
         //printPath(path);
 

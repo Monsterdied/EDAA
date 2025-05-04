@@ -11,18 +11,21 @@ int main(){
 
 
     Manager manager; // Create a Manager object
+    auto timeStart1 = chrono::high_resolution_clock::now();
     manager.ReadGIFST("../data/STCP","autocarro"); // Read the GIFST data from a file
     manager.ReadGIFST("../data/MetroDoPorto","metro"); // Read the GIFST data from a file
 
     //manager.ReadGIFST("../data/mdb-2027-202504140043","comboio");
     //manager.ReadGIFST("../data/tld-651-202504210112");
     //manager.ReadGIFST("../data/c1","c1");
-    //manager.ReadGIFST("../data/c2","c2");
+    manager.ReadGIFST("../data/c2","c2");
     //manager.ReadGIFST("../data/c3","c3");
-    //manager.ReadGIFST("../data/c4","c4");
+    manager.ReadGIFST("../data/c4","c4");
     manager.ReadGIFST("../data/germany","germany");
     manager.buildKDTree(); // Build a KD-Tree from the graph data
-
+    auto timeEnd1 = chrono::high_resolution_clock::now();
+    auto deltaTime1 = chrono::duration_cast<chrono::seconds>(timeEnd1 - timeStart1);
+    cout<<"Time taken: "<<deltaTime1.count()/60<<" Minutes "<<deltaTime1.count()%60<<" seconds" << endl;
     //time
     //
     /*
