@@ -24,6 +24,7 @@ class Node {
         Edge* previous = nullptr; // Previous node in the path
         bool visited = false; // Flag to check if the node has been visited
         double bestDistance = std::numeric_limits<double>::max(); // Best distance to the node
+        Time arrivalTime;
         Node(const string& id, double latitude, double longitude, string name = "", string type = "", string code = ""); // Constructor to initialize the node
         void reset();
         Point3D toPoint3D() const; // Convert to Point3D

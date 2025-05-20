@@ -1,6 +1,7 @@
 #include <iostream>
 #include <chrono>
 #include <iomanip> // for std::setfill and std::setw
+#include <ctime>
 #include "../include/Time.h"
 
 // Constructor: Set time using hours, minutes, seconds
@@ -8,6 +9,22 @@ Time::Time(int hours, int minutes, int seconds) {
     total_seconds = 
         std::chrono::hours(hours) + 
         std::chrono::minutes(minutes) + 
+        std::chrono::seconds(seconds);
+}
+//default constructor has the current time
+Time::Time() {
+    time_t timestamp;
+    time(&timestamp);
+
+    struct tm *timeinfo = localtime(&timestamp);
+
+    // Extract hours, minutes, seconds
+    int hours = timeinfo->tm_hour;
+    int minutes = timeinfo->tm_min;
+    int seconds = timeinfo->tm_sec;
+    total_seconds =
+        std::chrono::hours(hours) +
+        std::chrono::minutes(minutes) +
         std::chrono::seconds(seconds);
 }
 
@@ -23,6 +40,9 @@ int Time::get_minutes() const {
 int Time::get_seconds() const {
     return total_seconds.count() % 60;
 }
+void Time::add_seconds(int seconds) {
+    total_seconds += std::chrono::seconds(seconds);
+}
 
 // Print time in HH:MM:SS format
 void Time::print() const {
@@ -37,5 +57,9 @@ void Time::print() const {
 // Difference between two times (returns seconds)
 int Time::difference(const Time& other) const {
     return (total_seconds - other.total_seconds).count();
+}
+
+Time Time::clone() const {
+    return Time(*this); // Uses the copy constructor
 }
     

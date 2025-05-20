@@ -11,8 +11,11 @@ class Time {
         std::chrono::seconds total_seconds; // Stores time as total seconds since 00:00:00
     
     public:
+        Time();
         // Constructor: Set time using hours, minutes, seconds
         Time(int hours, int minutes, int seconds);
+
+        void add_seconds(int seconds); // Add seconds to the time
     
         // Get hours, minutes, seconds separately
         int get_hours() const;
@@ -26,6 +29,8 @@ class Time {
     
         // Difference between two times (returns seconds)
         int difference(const Time& other) const;
+
+        Time clone()const;
     };
 
 #endif // TIME_H
