@@ -58,7 +58,9 @@ void Time::print() const {
 int Time::difference(const Time& other) const {
     return (total_seconds - other.total_seconds).count();
 }
-
+bool Time::isEarlierThan(const Time& other) const {
+    return total_seconds < other.total_seconds;
+}
 Time Time::clone() const {
     return Time(*this); // Uses the copy constructor
 }

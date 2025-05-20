@@ -12,7 +12,7 @@ class Node;
 class Edge {
     public: 
         Node* startingNode; // Starting node of the edge
-        Time* time; // Date associated with the edge
+        const Time* time; // Date associated with the edge
         int travelTime; // Travel time in seconds
         Node* destinationNode; // Destination node of the edge
         string type;

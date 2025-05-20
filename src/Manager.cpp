@@ -245,6 +245,7 @@ double A_star_heuristic(const Node* currNode, const Coordinates goal,const Edge*
         return currNode->coordinates.haversineDistance(goal)*a_star_multiplier + currNode->distance;
     }
     int const timeDiff = edge->time == nullptr ? 0 : edge->time->difference(*currTime); // Calculate the time difference
+    cout<<"Edge diff "<<timeDiff<<"\n"<<endl;
     return currNode->coordinates.haversineDistance(goal)*a_star_multiplier+edge->travelTime + currNode->distance + timeDiff;
 }
 vector<Edge*> Manager::shortestPathAstar(Node* startNode, const Coordinates& goal,double max_tentative,Time startTime) const{
@@ -284,13 +285,15 @@ vector<Edge*> Manager::shortestPathAstar(Node* startNode, const Coordinates& goa
             //cout<< "Test2"<<endl;
             // Calculate tentative g-score
             int const waitingForStop  = dir->time !=nullptr ? dir->time->difference(current->arrivalTime) : 0; // Calculate the waiting time at the stop
-            if (waitingForStop < -30) {
+            bool isEarlier = dir->time->isEarlierThan(current->arrivalTime); // Check if the current time is earlier than the edge time
+            if (isEarlier) {
                 continue;
             }
-            //cout<<"Negative waiting time"<<endl;
-            //cout<< "Edge time: ";
-            //dir->time->print();
-            //cout<< "Current time: ";
+            cout<<"Negative waiting time  :"<<waitingForStop<<endl;
+            cout<< "Edge time: \n";
+            current->arrivalTime.print();
+            dir->time->print();
+            cout<< "\n\n";
             //current->arrivalTime.print();
             double tentativeG = A_star_heuristic(current,goal,dir,a_star_multiplier,&current->arrivalTime); // Calculate the tentative g-score
             //cout<<"tentative G"<<tentativeG<<endl;
@@ -336,7 +339,7 @@ vector<Edge*> Manager::shortestPathAstar(Node* startNode, const Coordinates& goa
 bool sortPaths(const pair<double, vector<Edge*>>& a, const pair<double, vector<Edge*>>& b){
     return a.first < b.first;
 }
-vector<pair<double,vector<Edge*>>> Manager::shortestPath(const Coordinates& start, const Coordinates& goal,double max_tentative,const int alternatives,const float a_star_multiplier) const{
+vector<pair<double,vector<Edge*>>> Manager::shortestPath(const Coordinates& start, const Coordinates& goal,Time startTime,double max_tentative,const int alternatives,const float a_star_multiplier) const{
     vector<Point3D> nearestNodes= kdTree.kNearestNeighbors(start.toPoint3D(), alternatives); // Get the k nearest neighbors
     vector<Node*> startNodes;
     vector<float> distances_TMP;
@@ -352,7 +355,6 @@ vector<pair<double,vector<Edge*>>> Manager::shortestPath(const Coordinates& star
         counter++;
         graph.reset();
         float distanceWithEuristic = distances_TMP[counter]*a_star_multiplier;
-        Time startTime = Time();
         startTime.add_seconds(distanceWithEuristic);
 
         vector<Edge*> path = shortestPathAstar(station,goal,max_tentative,startTime); // Find the shortest path

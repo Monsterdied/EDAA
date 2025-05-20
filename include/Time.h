@@ -30,6 +30,8 @@ class Time {
         // Difference between two times (returns seconds)
         int difference(const Time& other) const;
 
+        bool isEarlierThan(const Time& other) const;
+
         Time clone()const;
     };
 

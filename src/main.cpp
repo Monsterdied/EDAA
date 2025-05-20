@@ -31,11 +31,12 @@ int main(){
         Node* node = manager.graph.getNode(point.id);
         cout<<"node "<<node->name<<"id "<<node->id<<endl;
     }*/
-
-    auto timeStart = chrono::high_resolution_clock::now();
-    vector<pair<double,vector<Edge*>>> nodes= manager.shortestPath(Coordinates(-8.6190758,41.1570994),Coordinates(-8.5984257,41.1783583),9000000); // Find the shortest path between two coordinates
+    //create a random time
+    auto timeStart2 = chrono::high_resolution_clock::now();
+    Time timeStart = Time(13, 2d -, 0); // Create a Time object with the current time
+    vector<pair<double,vector<Edge*>>> nodes= manager.shortestPath(Coordinates(-8.6190758,41.1570994),Coordinates(-8.5984257,41.1783583),timeStart,900000000); // Find the shortest path between two coordinates
     auto timeEnd = chrono::high_resolution_clock::now();
-    auto deltaTime = chrono::duration_cast<chrono::seconds>(timeEnd - timeStart);
+    auto deltaTime = chrono::duration_cast<chrono::seconds>(timeEnd - timeStart2);
 
     for (int i = 1; i >=0; i--) {
         manager.printPath(nodes[i].second); // Print the path
