@@ -4,7 +4,6 @@
 
 using namespace std;
 
-
 Edge::Edge(Node* startingNode, Node* destinationNode,Time* time,int travelTime,string type) {
     this->time = time;
     this->startingNode = startingNode;
