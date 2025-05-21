@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <vector>
 #include <string>
+#include <iomanip>
 using namespace std;
 
 Manager::Manager(){
@@ -184,7 +185,7 @@ void Manager::ReadRoutesStops(const string& filename,string type) {
     file.close();
 }
 
-void Manager::ReadGIFST(const string& filename,string type){
+void Manager::ReadGTFS(const string& filename,string type){
     string stationsFile = filename + "/stops.txt";
     string routesFile = filename + "/stop_times.txt";
     ReadStations(stationsFile,type);
@@ -219,9 +220,14 @@ void Manager::printPath(const vector<Edge*>& path) const{
         time += to_string(edge->travelTime%60) + " seconds"; // Print the travel time
         cout <<left<<std::setfill('-')<<setw(25)<< time;
         cout<<"type: "<< edge->type<<" ---> " << destinationName << endl<<endl;
+        if (edge->time != nullptr) {
+             edge->time->print();
+        }
+
     }
     int minutes1 = timeCounter/60;
     cout<<"Traveled Time: "<<minutes1 << " minutes " <<timeCounter%60 << " seconds"<<endl; // Print the path
+
 }
 
 vector<Edge*> Manager::getKNearestFootEdges(Node* node, int k)const {
@@ -250,7 +256,7 @@ double A_star_heuristic(const Node* currNode, const Coordinates goal,const Edge*
 }
 vector<Edge*> Manager::shortestPathAstar(Node* startNode, const Coordinates& goal,double max_tentative,Time startTime) const{
     vector<Edge*> path; // Vector to store the path
-    const int a_star_multiplier=2.5;
+    const float a_star_multiplier=2.5;
     Node* bestPoint =startNode;
     Node* closestNode =startNode;
     startNode->visited = true;
@@ -378,4 +384,36 @@ vector<pair<double,vector<Edge*>>> Manager::shortestPath(const Coordinates& star
     }
     std::sort(result.begin(), result.end(),sortPaths);
     return result; // Return the result
+}
+
+// Add to Manager.cpp
+void Manager::printAllNodes() const {
+    cout << "All Nodes in the Graph:" << endl;
+    cout << "----------------------" << endl;
+    for (const auto& node : graph.getNodes()) {
+        cout << "Node ID: " << node.second->id << endl;
+        cout << "Coordinates: (";
+        auto coords = node.second->coordinates.getCoordinates();
+        cout << "Lat: " << coords.first << ", Lon: " << coords.second << ")" << endl;
+        cout << "----------------------" << endl;
+    }
+    cout << "Total number of nodes: " << graph.getNodes().size() << endl;
+}
+
+void Manager::printAllEdges() const {
+    cout << "All Edges in the Graph:" << endl;
+    cout << "----------------------" << endl;
+    size_t totalEdges = 0;
+
+    for (const auto& [id, node] : graph.getNodes()) {
+        vector<Edge*> edges = graph.getAdjacentEdges(id);
+        for (const Edge* edge : edges) {
+            cout << "From Node: " << edge->startingNode->id << " -> To Node: " << edge->destinationNode->id << endl;
+            edge->time->print();
+            cout << "Type: " << edge->type << endl;
+            cout << "----------------------" << endl;
+            totalEdges++;
+        }
+    }
+    cout << "Total number of edges: " << graph.getEdgeCount() << endl;
 }

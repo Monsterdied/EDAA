@@ -9,16 +9,19 @@ int main(){
 
     Manager manager; // Create a Manager object
     auto timeStart1 = chrono::high_resolution_clock::now();
-    manager.ReadGIFST("../data/STCP","autocarro"); // Read the GIFST data from a file
-    manager.ReadGIFST("../data/MetroDoPorto","metro"); // Read the GIFST data from a file
+    //manager.ReadGTFS("../data/STCP","autocarro"); // Read the GTFS data from a file
+    //manager.ReadGTFS("../data/MetroDoPorto","metro"); // Read the GTFS data from a file
+    manager.ReadGTFS("../data/test","metro");
+    //manager.printAllNodes();
+    manager.printAllEdges();
 
-    //manager.ReadGIFST("../data/mdb-2027-202504140043","comboio");
-    //manager.ReadGIFST("../data/tld-651-202504210112");
-    ////manager.ReadGIFST("../data/c1","c1");
-    //manager.ReadGIFST("../data/c2","c2");
-    ////manager.ReadGIFST("../data/c3","c3");
-    //manager.ReadGIFST("../data/c4","c4");
-    //manager.ReadGIFST("../data/germany","germany");
+    //manager.ReadGTFS("../data/mdb-2027-202504140043","comboio");
+    //manager.ReadGTFS("../data/tld-651-202504210112");
+    ////manager.ReadGTFS("../data/c1","c1");
+    //manager.ReadGTFS("../data/c2","c2");
+    ////manager.ReadGTFS("../data/c3","c3");
+    //manager.ReadGTFS("../data/c4","c4");
+    //manager.ReadGTFS("../data/germany","germany");
     manager.buildKDTree(); // Build a KD-Tree from the graph data
     auto timeEnd1 = chrono::high_resolution_clock::now();
     auto deltaTime1 = chrono::duration_cast<chrono::seconds>(timeEnd1 - timeStart1);
@@ -33,13 +36,13 @@ int main(){
     }*/
     //create a random time
     auto timeStart2 = chrono::high_resolution_clock::now();
-    Time timeStart = Time(13, 2, 0); // Create a Time object with the current time
-    vector<pair<double,vector<Edge*>>> nodes= manager.shortestPath(Coordinates(-8.6190758,41.1570994),Coordinates(-8.5984257,41.1783583),timeStart,900000000); // Find the shortest path between two coordinates
+    Time timeStart = Time(0, 0, 0); // Create a Time object with the current time
+    //vector<pair<double,vector<Edge*>>> nodes= manager.shortestPath(Coordinates(-8.6190758,41.1570994),Coordinates(-8.5984257,41.1783583),timeStart,900000000); // Find the shortest path between two coordinates
     auto timeEnd = chrono::high_resolution_clock::now();
     auto deltaTime = chrono::duration_cast<chrono::seconds>(timeEnd - timeStart2);
 
     for (int i = 1; i >=0; i--) {
-        manager.printPath(nodes[i].second); // Print the path
+        //manager.printPath(nodes[i].second); // Print the path
     }
     cout<<"Time taken: "<<deltaTime.count()/60<<" Minutes "<<deltaTime.count()%60<<" seconds" << endl;
 
