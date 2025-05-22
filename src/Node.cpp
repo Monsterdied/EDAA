@@ -1,8 +1,6 @@
 #include "../include/Node.h"
-#include <iostream>
 #include "../include/Coordinates.h"
 using namespace std;
-
 
 Node::Node(const string& id, double latitude, double longitude, string name, string type, string code) {
     this->id = id;
@@ -11,6 +9,7 @@ Node::Node(const string& id, double latitude, double longitude, string name, str
     this->type = type;
     this->code = code;
 }
+
 void Node::reset(){
     distance =std::numeric_limits<double>::max(); // Distance from the start node
     previous = nullptr; // Previous node in the path
