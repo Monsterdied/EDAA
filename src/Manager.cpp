@@ -92,96 +92,142 @@ void Manager::ReadStations(const string& filename,string type) {
 }
 
 
-void Manager::ReadRoutesStops(const string& filename,string type) {
+// Helper to parse time string from GTFS
+Time* parseGTFSTime(const string& time_str) {
+    if (time_str.empty()) return nullptr;
+
+    std::istringstream iss(time_str);
+    char delim = ':';
+    int hours, minutes, seconds;
+    if (iss >> hours >> delim >> minutes >> delim >> seconds) {
+        return new Time(hours, minutes, seconds);
+    }
+    std::cerr << "Warning: Could not parse time string: " << time_str << std::endl;
+    return nullptr;
+}
+
+void Manager::ReadRoutesStops(const string& filename, string type) {
     ifstream file(filename);
-    // the map stores for each trip_id the stop_id of the last stop
-    unordered_map<string, string> PreviousStopId;
-    // the map stores for each trip_id the previous departure time
-    unordered_map<string, Time*> PreviousStopDeparture;
     if (!file.is_open()) {
         cerr << "Error opening file: " << filename << endl;
         return;
     }
 
+    struct StopInfo {
+        string id;
+        Time* departure_time{}; // Departure time from this stop
+    };
+    unordered_map<string, StopInfo> trip_previous_stop_info;
+
     string line;
-    bool isHeader = true; // To skip the header line
-    int trip_id_idx,arrival_time_idx,departure_time_str_idx,stop_id_idx,stop_sequence_idx;
-    int lineCount = 0; // Initialize line count
+    bool isHeader = true;
+    int trip_id_idx = -1, arrival_time_idx = -1, departure_time_idx = -1, stop_id_idx = -1; // Initialize to -1
+    int lineCount = 0;
+
     while (getline(file, line)) {
-        lineCount++; // Increment line count
-        if(lineCount % 100000 == 0) {
-            cout << "Processed " << lineCount << " Edges." << endl; // Print progress every 1000 lines
+        lineCount++;
+        if (lineCount % 100000 == 0) {
+            cout << "Processed " << lineCount << " Edges." << endl;
         }
-        istringstream iss(line);
+
+        istringstream iss_line(line); // Use a different name for the line stream
         vector<string> vecLine;
-        string header;
-        while(getline(iss, header, ',')) {
-            vecLine.push_back(header); // Store each header in a vector
+        string field;
+        while (getline(iss_line, field, ',')) {
+            vecLine.push_back(field);
         }
+
         if (isHeader) {
-            int idx = 0;
-            for (const auto& header : vecLine) {
-                if (header == "trip_id") {
-                    trip_id_idx = idx;
-                }else if (header == "arrival_time") {
-                    arrival_time_idx = idx;
-                }else if (header == "departure_time") {
-                    departure_time_str_idx = idx;
-                }else if (header == "stop_id") {
-                    stop_id_idx = idx;
-                }else if (header == "stop_sequence") {
-                    stop_sequence_idx = idx;
-                }
-                idx++;
+            for (int idx = 0; idx < vecLine.size(); ++idx) {
+                if (vecLine[idx] == "trip_id") trip_id_idx = idx;
+                else if (vecLine[idx] == "arrival_time") arrival_time_idx = idx;
+                else if (vecLine[idx] == "departure_time") departure_time_idx = idx;
+                else if (vecLine[idx] == "stop_id") stop_id_idx = idx;
             }
-            isHeader = false; // Skip the first line (header)
+            isHeader = false;
+            // Basic check if all required columns were found
+            if (trip_id_idx == -1 || arrival_time_idx == -1 || departure_time_idx == -1 || stop_id_idx == -1) {
+                cerr << "Error: Missing one or more required columns in stop_times.txt header: " << line << endl;
+                file.close();
+                // Clean up any Time objects already in trip_previous_stop_info
+                for (auto const& pair_info : trip_previous_stop_info) {
+                    delete pair_info.second.departure_time;
+                }
+                return;
+            }
             continue;
         }
-        string trip_id,arrival_time,departure_time_str,stop_id,stop_sequence;
-        double stop_lat, stop_lon;
 
-        // Parse the CSV line
-        trip_id = vecLine[trip_id_idx]; // Get the trip_id from the vector
-        stop_id = type+vecLine[stop_id_idx]; // Get the stop_id from the vector
-        stop_sequence = vecLine[stop_sequence_idx]; // Get the stop_sequence from the vector
-        departure_time_str = vecLine[departure_time_str_idx]; // Get the departure_time from the vector
-        arrival_time = vecLine[arrival_time_idx]; // Get the arrival_time from the vector
-        //convert string to int
-        //cout << "trip_id: " << trip_id << ", stop_id: " << stop_id << ", stop_sequence: " << stop_sequence << ", departure_time: " << departure_time_str << endl;
-        int stop_sequence_int = stoi(stop_sequence); // Convert stop_sequence to int
-        //check if trip_id is in the map
-        //parse the time
-        std::istringstream iss1(departure_time_str);
-        char delim = ':'; // Delimiter for time
-        int hours, minutes, seconds;
-        iss1 >> hours >> delim >> minutes >> delim >> seconds;
-        Time* departure_time = new Time(hours, minutes, seconds); // Create a Time object
 
-        if (PreviousStopId.find(trip_id) != PreviousStopId.end()){
-            //get the nodes
-            string startingStopId = PreviousStopId[trip_id];
-            Node* startingStop = graph.getNode( PreviousStopId[trip_id]); // Get the starting stop from the map
-            Node* destinationStop = graph.getNode(stop_id); // Get the destination stop from the map
-            //check if the nodes are not null
-            if (startingStop != nullptr && destinationStop != nullptr) {
-                //create the edge and add it to the graph
-                Time* previousDepartureTime = PreviousStopDeparture[trip_id]; // Get the previous departure time from the map
-                // Calculate the time difference between the two stops
-                int travelTime = departure_time->difference(*previousDepartureTime); // Calculate the time difference
-                // Create an edge with the time difference
-                //cout << "Edge created from " << startingStop->id << " to " << destinationStop->id <<"travelTime: "<<travelTime<< endl;
-                Edge* edge = new Edge(startingStop, destinationStop, departure_time,travelTime,type,trip_id); // Create an edge object
-                graph.addEdge(edge); // Add the edge to the graph
-            } else {
-                cerr << "Error: Node not found for stating_stop_id: " << startingStopId << " or stop_id: " << stop_id <<"Sequence: "<<stop_sequence_int<< endl;
-            }
+        // Ensure vector has enough elements for safety
+        if (vecLine.size() <= max({trip_id_idx, arrival_time_idx, departure_time_idx, stop_id_idx})) {
+            cerr << "Warning: Skipping malformed line (not enough columns): " << line << endl;
+            continue;
         }
-        PreviousStopId[trip_id] = stop_id; // Add the stop_id to the map with a value of 0
-        PreviousStopDeparture[trip_id] = departure_time; // Add the stop_id to the map with a value of 0
-        //Node* StartingNode = new Node(stop_id, stop_lat, stop_lon, stop_name, "metro", stop_code, stop_desc, zone_id); // Create a node object
-        
+
+        string trip_id = vecLine[trip_id_idx];
+        string current_stop_id_short = vecLine[stop_id_idx];
+        string current_stop_id_full = type + current_stop_id_short;
+        string arrival_time_str = vecLine[arrival_time_idx];
+        string departure_time_str = vecLine[departure_time_idx];
+
+        Time* current_arrival_time = parseGTFSTime(arrival_time_str);
+        Time* current_departure_time = parseGTFSTime(departure_time_str);
+
+        if (!current_arrival_time || !current_departure_time) {
+            cerr << "Warning: Failed to parse time for trip " << trip_id << ", stop " << current_stop_id_full << ". Skipping entry." << endl;
+            delete current_arrival_time; // delete if one succeeded but other failed or if both were null
+            delete current_departure_time;
+            continue;
+        }
+
+        if (trip_previous_stop_info.count(trip_id)) {
+            const StopInfo& prev_stop = trip_previous_stop_info[trip_id];
+            Node* startingNode = graph.getNode(prev_stop.id);
+            Node* destinationNode = graph.getNode(current_stop_id_full);
+
+            if (startingNode && destinationNode && prev_stop.departure_time) {
+                // Edge: startingNode -> destinationNode
+                // Scheduled departure for this edge is from startingNode (prev_stop.departure_time)
+                Time* edge_scheduled_departure_time = new Time(*(prev_stop.departure_time)); // Crucial: Edge gets its OWN Time object
+
+                // Travel time = arrival at current_stop - departure from prev_stop
+                int travelTimeSeconds = current_arrival_time->difference(*(prev_stop.departure_time));
+
+                if (travelTimeSeconds < 0) {
+                    cerr << "Warning: Negative travel time for trip " << trip_id << " from " << startingNode->id << " (depart ";
+                    prev_stop.departure_time->print();
+                    cerr << ") to " << destinationNode->id << " (arrive ";
+                    current_arrival_time->print();
+                    cerr << "). Travel time: " << travelTimeSeconds << "s. Skipping edge." << endl;
+                    delete edge_scheduled_departure_time; // Clean up the copied time object
+                } else {
+                    Edge* edge = new Edge(startingNode, destinationNode, edge_scheduled_departure_time, travelTimeSeconds, type);
+                    graph.addEdge(edge);
+                }
+            } else {
+                if (!startingNode) cerr << "Error: Previous stop node not found: " << prev_stop.id << endl;
+                if (!destinationNode) cerr << "Error: Current stop node not found: " << current_stop_id_full << endl;
+                if (!prev_stop.departure_time) cerr << "Error: Missing previous departure time for trip " << trip_id << endl;
+            }
+            delete prev_stop.departure_time;
+        }
+
+        // Update map: current stop becomes the previous stop for the next segment of this trip
+        trip_previous_stop_info[trip_id] = {current_stop_id_full, current_departure_time};
+        // DO NOT delete current_departure_time here, it's now stored in the map.
+        // DO delete current_arrival_time as it's only used for calculation in this iteration.
+        delete current_arrival_time;
+
+    } // End of while loop
+
+    // Clean up any remaining Time objects in the map (for the last stop of each trip)
+    for (auto const& pair_info : trip_previous_stop_info) {
+        delete pair_info.second.departure_time;
     }
-    cout << "Graph has been created with " << graph.getNodeCount() << " nodes and " << graph.getEdgeCount() << " edges." << endl;
+    trip_previous_stop_info.clear();
+
+    cout << "Graph processing complete. Nodes: " << graph.getNodeCount() << ", Edges: " << graph.getEdgeCount() << endl;
     file.close();
 }
 
@@ -268,7 +314,7 @@ double A_star_heuristic(const Node* currNode, const Coordinates goal,const Edge*
 }
 vector<Edge*> Manager::shortestPathAstar(Node* startNode, const Coordinates& goal,double max_tentative,Time startTime) const{
     vector<Edge*> path; // Vector to store the path
-    const float a_star_multiplier=2.5;
+    const float a_star_multiplier=2;
     Node* bestPoint =startNode;
     Node* closestNode =startNode;
     startNode->visited = true;
@@ -435,4 +481,116 @@ void Manager::printAllEdges() const {
         }
     }
     cout << "Total number of edges: " << graph.getEdgeCount() << endl;
+}
+
+void Manager::newPrintPath(const vector<Edge*>& path, Time journeyStartTime) const {
+    if (path.empty()) {
+        cout << "Path is empty." << endl;
+        return;
+    }
+
+    cout << "\n==========================================================" << endl;
+    cout << "               ROUTE DETAILS" << endl;
+    cout << "==========================================================" << endl;
+    cout << "Journey initially started at: ";
+    journeyStartTime.print(); // Assumes journeyStartTime is the absolute start before any travel.
+    cout << "----------------------------------------------------------" << endl;
+
+    Time currentEffectiveTime = journeyStartTime; // Tracks the traveller's time progression.
+                                             // For the first leg (foot), this is the departure time.
+                                             // For transit, this will become the arrival time at the previous stop.
+
+    for (size_t i = 0; i < path.size(); ++i) {
+        const Edge* edge = path[i];
+        if (!edge) {
+            cout << "Error: Null edge in path at index " << i << endl;
+            continue;
+        }
+
+        Node* legStartNode = edge->startingNode; // Physical station/point where this leg begins
+        Node* legDestNode = edge->destinationNode;   // Physical station/point where this leg ends
+
+        string legStartName = "Your Current Location";
+        if (legStartNode) {
+            legStartName = legStartNode->name;
+        }
+
+        string legDestName = "Your Final Destination";
+        if (legDestNode) {
+            // Check if it's the special "goal" node created in A*
+            // You might need a more robust way to identify this (e.g., a specific ID or flag)
+            // For now, assuming if its name is empty or "goal" and it's the last edge.
+            if (legDestNode->name.empty() || (legDestNode->id == "goal" && i == path.size() - 1) ) {
+                 legDestName = "Your Final Destination";
+            } else {
+                legDestName = legDestNode->name;
+            }
+        }
+
+        cout << "Leg " << i + 1 << ": Take " << edge->type
+             << " from [" << legStartName << "] to [" << legDestName << "]" << endl;
+
+        Time legDepartureTime;
+
+        if (edge->type == "foot") {
+            // For foot travel, departure is immediate from currentEffectiveTime
+            legDepartureTime = currentEffectiveTime;
+            cout << "  Depart (walking): ";
+            legDepartureTime.print();
+        } else { // Transit edge
+            if (edge->time) { // Scheduled departure time for this transit service
+                legDepartureTime = *(edge->time);
+                // Calculate wait time at legStartNode
+                // currentEffectiveTime is arrival at legStartNode from previous leg
+                if (legStartNode) { // Ensure there's a station we arrived at
+                    int waitSeconds = legDepartureTime.difference(currentEffectiveTime);
+                    if (waitSeconds < 0) {
+                        // This case (scheduled departure is before arrival at stop)
+                        // should ideally be prevented by A* logic.
+                        // Print a warning or handle as an issue.
+                        cout << "  WARNING: Scheduled departure is BEFORE arrival at stop!" << endl;
+                        cout << "    Arrival at " << legStartName << ": "; currentEffectiveTime.print();
+                        cout << "    Scheduled Depart: "; legDepartureTime.print();
+                        // To proceed, we might have to assume we wait for next day or it's an error.
+                        // For now, just note it and proceed with scheduled departure.
+                    } else if (waitSeconds > 5) { // Only print significant waits (e.g. >5 seconds)
+                        cout << "  Wait at [" << legStartName << "]: "
+                             << (waitSeconds / 60) << "m " << (waitSeconds % 60) << "s" << endl;
+                        cout << "    (Arrived at stop: "; currentEffectiveTime.print();
+                        cout << "     Scheduled service departure: "; legDepartureTime.print();
+                        cout << "    )" << endl;
+                    }
+                }
+                 cout << "  Depart via " << edge->type << " service: ";
+                 legDepartureTime.print();
+            } else {
+                // Transit edge without a specific schedule? Unlikely with GTFS.
+                // Default to immediate departure from currentEffectiveTime.
+                legDepartureTime = currentEffectiveTime;
+                cout << "  Depart (unscheduled transit): ";
+                legDepartureTime.print();
+            }
+        }
+
+        // Update currentEffectiveTime: it's now the arrival time at legDestNode
+        currentEffectiveTime = legDepartureTime; // Start with the departure time of the current leg
+        currentEffectiveTime.add_seconds(edge->travelTime); // Add this leg's travel duration
+
+        cout << "  Travel Time for this leg: " << (edge->travelTime / 60) << "m " << (edge->travelTime % 60) << "s" << endl;
+        cout << "  Arrive at [" << legDestName << "]: ";
+        currentEffectiveTime.print();
+        cout << "----------------------------------------------------------" << endl;
+    }
+
+    cout << "Total Estimated Journey Time: ";
+    int totalSeconds = currentEffectiveTime.difference(journeyStartTime); // journeyStartTime is the absolute start
+    int totalHours = totalSeconds / 3600;
+    int totalMinutes = (totalSeconds % 3600) / 60;
+    int remainingSeconds = totalSeconds % 60;
+
+    if (totalHours > 0) {
+        cout << totalHours << "h ";
+    }
+    cout << totalMinutes << "m " << remainingSeconds << "s" << endl;
+    cout << "==========================================================" << endl << endl;
 }

@@ -25,12 +25,12 @@ class Manager {
         vector<pair<double,vector<Edge*>>> shortestPath(const Coordinates& start, const Coordinates& goal,Time startTime,double max_tentative=1000000000,
                                                         const int alternatives=15,const float a_star_multiplier=2.5) const; // Function to find the shortest path between two coordinates
 
-        void printPath(const vector<Edge*>& path) const; // Function to print the path
         Manager(); // Constructor to initialize the Manager
 
         void printAllNodes() const;
         void printAllEdges() const;
-
+        void newPrintPath(const vector<Edge*>& path, Time journeyStartTime) const;
+        void printPath(const vector<Edge*>& path) const;
 
     
 };

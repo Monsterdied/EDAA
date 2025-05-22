@@ -36,7 +36,8 @@ class Edge {
          * @param time Pointer to time information (ownership not transferred)
          * @param travelTime Travel duration in seconds
          * @param type Type classification of the edge
-        */
+         * @param string rideName Optional name for the ride (default is empty string)
+         */
         Edge(Node* startingNode, Node* destinationNode,Time* time,int travelTime,string type,string rideName="");
 };
 
