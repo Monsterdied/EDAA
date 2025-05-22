@@ -10,13 +10,15 @@ using namespace std;
 #include "Time.h"
 class Node;
 class Edge {
-    public: 
+    public:
+    //debug
+        string rideName;
         Node* startingNode; // Starting node of the edge
         const Time* time; // Date associated with the edge
         int travelTime; // Travel time in seconds
         Node* destinationNode; // Destination node of the edge
         string type;
-        Edge(Node* startingNode, Node* destinationNode,Time* time,int travelTime,string type); // Constructor to initialize the edge
+        Edge(Node* startingNode, Node* destinationNode,Time* time,int travelTime,string type,string rideName=""); // Constructor to initialize the edge
 };
 
 

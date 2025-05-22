@@ -5,7 +5,8 @@
 using namespace std;
 
 
-Edge::Edge(Node* startingNode, Node* destinationNode,Time* time,int travelTime,string type) {
+Edge::Edge(Node* startingNode, Node* destinationNode,Time* time,int travelTime,string type,string Ridename) {
+    this->rideName = Ridename;
     this->time = time;
     this->startingNode = startingNode;
     this->type = type;

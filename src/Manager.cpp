@@ -169,7 +169,7 @@ void Manager::ReadRoutesStops(const string& filename,string type) {
                 int travelTime = departure_time->difference(*previousDepartureTime); // Calculate the time difference
                 // Create an edge with the time difference
                 //cout << "Edge created from " << startingStop->id << " to " << destinationStop->id <<"travelTime: "<<travelTime<< endl;
-                Edge* edge = new Edge(startingStop, destinationStop, departure_time,travelTime,type); // Create an edge object
+                Edge* edge = new Edge(startingStop, destinationStop, departure_time,travelTime,type,trip_id); // Create an edge object
                 graph.addEdge(edge); // Add the edge to the graph
             } else {
                 cerr << "Error: Node not found for stating_stop_id: " << startingStopId << " or stop_id: " << stop_id <<"Sequence: "<<stop_sequence_int<< endl;
@@ -193,6 +193,7 @@ void Manager::ReadGIFST(const string& filename,string type){
 void Manager::printPath(const vector<Edge*>& path) const{
     cout << "Shortest path:" <<path.size()<< endl; // Print the shortest path
     int timeCounter = 0;
+    Time prevTime = path[0]->time->clone();
     for (auto& edge : path) {
         string startingNodeId = edge->startingNode != nullptr ? edge->startingNode->id : "start"; // Get the starting node ID
         string destinationNodeId = edge->destinationNode != nullptr ? edge->destinationNode->id : "destination"; // Get the destination node ID
@@ -201,16 +202,27 @@ void Manager::printPath(const vector<Edge*>& path) const{
         Node* StartingNode =graph.getNode(startingNodeId);
         Node* DestinationNode = graph.getNode(destinationNodeId);
         if (StartingNode != nullptr && DestinationNode != nullptr) {
-            Time start = StartingNode->arrivalTime;
-            start.add_seconds(edge->travelTime);
-            int difference = DestinationNode->arrivalTime.difference(start);
+            Time startTime = prevTime;
+            Time destTime = prevTime.clone();
+            destTime.add_seconds(edge->travelTime);
+            int difference = edge->time->difference(startTime);
             if (difference !=0) {
+                cout << "Time arrived at the station ";
+                destTime.print();
+                cout<<endl;
+                cout<< "Time leaving the station";
+                edge->time->print();
+                cout<<edge->travelTime;
+                cout<<endl;
                 cout<<"Transfer Wait :"<<difference/60<<" minutes "<<difference%60<<" seconds"<<endl;
             }
+            destTime.add_seconds(difference);
+            prevTime = destTime;
 
         }
         timeCounter += edge->travelTime; // Add the travel time to the counter
         int minutes = edge->travelTime/60;
+        cout <<left<<std::setfill('-')<<setw(30)<<edge->rideName<<" ";
         cout <<left<<std::setfill('-')<<setw(30)<< startingName << "TravelTime: ";
         string time;
         if (minutes > 0) {
@@ -245,7 +257,7 @@ double A_star_heuristic(const Node* currNode, const Coordinates goal,const Edge*
         return currNode->coordinates.haversineDistance(goal)*a_star_multiplier + currNode->distance;
     }
     int const timeDiff = edge->time == nullptr ? 0 : edge->time->difference(*currTime); // Calculate the time difference
-    cout<<"Edge diff "<<timeDiff<<"\n"<<endl;
+    //cout<<"Edge diff "<<timeDiff<<"\n"<<endl;
     return currNode->coordinates.haversineDistance(goal)*a_star_multiplier+edge->travelTime + currNode->distance + timeDiff;
 }
 vector<Edge*> Manager::shortestPathAstar(Node* startNode, const Coordinates& goal,double max_tentative,Time startTime) const{
@@ -268,6 +280,7 @@ vector<Edge*> Manager::shortestPathAstar(Node* startNode, const Coordinates& goa
     while (!openSet.empty()) {
         counter++;
         if(counter > max_tentative){
+            cout<< "Breaked\n";
             break;
         }
         Node* current = openSet.top();
@@ -279,6 +292,12 @@ vector<Edge*> Manager::shortestPathAstar(Node* startNode, const Coordinates& goa
         //directions.insert(directions.end(), footDirections.begin(), footDirections.end()); // Add the foot edges to the directions
         for (const auto& dir : directions) {
             Node* neighbor = dir->destinationNode; // Get the neighboring node
+            //cout << "test1 " << neighbor->id;
+            /*if (neighbor->id == "metro5775") {
+                cout << "end "<<dir->travelTime << endl;
+                cout << "end1 " <<dir->rideName << endl;
+                neighbor->arrivalTime.print();
+            }*/
             if (neighbor->visited) {
                 continue; // Skip if the neighbor has already been visited
             }
@@ -289,11 +308,11 @@ vector<Edge*> Manager::shortestPathAstar(Node* startNode, const Coordinates& goa
             if (isEarlier) {
                 continue;
             }
-            cout<<"Negative waiting time  :"<<waitingForStop<<endl;
-            cout<< "Edge time: \n";
-            current->arrivalTime.print();
-            dir->time->print();
-            cout<< "\n\n";
+            //cout<<"Negative waiting time  :"<<waitingForStop<<endl;
+            //cout<< "Edge time: \n";
+            //current->arrivalTime.print();
+            //dir->time->print();
+            //cout<< "\n\n";
             //current->arrivalTime.print();
             double tentativeG = A_star_heuristic(current,goal,dir,a_star_multiplier,&current->arrivalTime); // Calculate the tentative g-score
             //cout<<"tentative G"<<tentativeG<<endl;
@@ -360,7 +379,7 @@ vector<pair<double,vector<Edge*>>> Manager::shortestPath(const Coordinates& star
         vector<Edge*> path = shortestPathAstar(station,goal,max_tentative,startTime); // Find the shortest path
 
         cout<<"\nStation : "<<station->name<<endl;
-        path.insert(path.begin(), new Edge(nullptr,station, nullptr,
+        path.insert(path.begin(), new Edge(nullptr,station, &startTime,
             distanceWithEuristic,"foot"));
 
         // get distance of the last edge

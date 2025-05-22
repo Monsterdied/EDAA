@@ -33,7 +33,7 @@ int main(){
     }*/
     //create a random time
     auto timeStart2 = chrono::high_resolution_clock::now();
-    Time timeStart = Time(13, 2, 0); // Create a Time object with the current time
+    Time timeStart = Time(9, 10, 0); // Create a Time object with the current time
     vector<pair<double,vector<Edge*>>> nodes= manager.shortestPath(Coordinates(-8.6190758,41.1570994),Coordinates(-8.5984257,41.1783583),timeStart,900000000); // Find the shortest path between two coordinates
     auto timeEnd = chrono::high_resolution_clock::now();
     auto deltaTime = chrono::duration_cast<chrono::seconds>(timeEnd - timeStart2);
