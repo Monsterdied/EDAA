@@ -31,8 +31,8 @@ class Node {
         double distance =std::numeric_limits<double>::max(); ///< Current distance from start node
         Edge* previous = nullptr; ///< Previous node in the shortest path
         bool visited = false; ///< Visited flag for traversal algorithms
-        double bestDistance = std::numeric_limits<double>::max(); ///< Best known distance
-        Time arrivalTime; ///< Estimated arrival time at this node
+        double bestDistance = std::numeric_limits<double>::max(); ///< Best known distance with heuristic
+        Time* arrivalTime=nullptr; ///< Estimated arrival time at this node
 
         /**
          * @brief Construct a new Node object

@@ -14,16 +14,9 @@
 */
 class Time {
     private:
-        std::chrono::seconds total_seconds; ///< Stores time as total seconds since 00:00:00
+        int total_seconds; ///< Stores time as total seconds since 00:00:00
     
     public:
-
-        /**
-        * @brief Default constructor.
-        * @details Initializes time to 00:00:00.
-        */
-        Time();
-
         /**
         * @brief Parameterized constructor.
         * @param hours The hour component
@@ -31,6 +24,9 @@ class Time {
         * @param seconds The second component
         */
         Time(int hours, int minutes, int seconds);
+
+
+        Time(int totalSeconds);
 
         /**
          * @brief Adds seconds to the current time.
@@ -66,20 +62,13 @@ class Time {
          * @param other The other Time object to compare with
          * @return Difference in seconds (positive if this time is later than other)
         */
-        int difference(const Time& other) const;
-
-        /**
-         * @brief Compares if this time is earlier than another time.
-         * @param other The other Time object to compare with
-         * @return true if this time is earlier than other, false otherwise
-         */
-        bool isEarlierThan(const Time& other) const;
+        int difference(const Time* other) const;
 
         /**
          * @brief Creates a copy of this Time object.
          * @return A new Time object with identical time values
          */
-        Time clone() const;
+        Time* clone() const;
     };
 
 #endif // TIME_H

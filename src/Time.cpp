@@ -6,43 +6,30 @@
 
 // Constructor: Set time using hours, minutes, seconds
 Time::Time(int hours, int minutes, int seconds) {
-    total_seconds = 
-        std::chrono::hours(hours) + 
-        std::chrono::minutes(minutes) + 
-        std::chrono::seconds(seconds);
+    total_seconds = hours *3600 + minutes *60 + seconds;
+}
+Time::Time(int totalSeconds) {
+    total_seconds = totalSeconds;
 }
 
 //default constructor has the current time
-Time::Time() {
-    time_t timestamp;
-    time(&timestamp);
 
-    struct tm *timeinfo = localtime(&timestamp);
-
-    // Extract hours, minutes, seconds
-    int hours = timeinfo->tm_hour;
-    int minutes = timeinfo->tm_min;
-    int seconds = timeinfo->tm_sec;
-    total_seconds =
-        std::chrono::hours(hours) +
-        std::chrono::minutes(minutes) +
-        std::chrono::seconds(seconds);
-}
 
 // Get hours, minutes, seconds separately
 int Time::get_hours() const {
-    return std::chrono::duration_cast<std::chrono::hours>(total_seconds).count() % 24;
+    return (total_seconds/(60*60))%24;
 }
 
 int Time::get_minutes() const {
-    return std::chrono::duration_cast<std::chrono::minutes>(total_seconds).count() % 60;
+    return (total_seconds/60)%60;
 }
 
 int Time::get_seconds() const {
-    return total_seconds.count() % 60;
+    return total_seconds%60;
 }
 void Time::add_seconds(int seconds) {
-    total_seconds += std::chrono::seconds(seconds);
+    total_seconds += seconds;
+    total_seconds = total_seconds % (60*24*60);
 }
 
 // Print time in HH:MM:SS format
@@ -56,13 +43,13 @@ void Time::print() const {
 
 
 // Difference between two times (returns seconds)
-int Time::difference(const Time& other) const {
-    return (total_seconds - other.total_seconds).count();
+int Time::difference(const Time* other) const {
+    int differenceTmp =total_seconds - other->total_seconds;
+    if (differenceTmp < 0) {
+        differenceTmp = (60*60*24 -other->total_seconds) +total_seconds;
+    }
+    return differenceTmp;
 }
-bool Time::isEarlierThan(const Time& other) const {
-    return total_seconds < other.total_seconds;
+Time* Time::clone() const {
+    return new Time(total_seconds);
 }
-Time Time::clone() const {
-    return Time(*this); // Uses the copy constructor
-}
-    

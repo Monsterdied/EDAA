@@ -37,22 +37,22 @@ int main(){
     }*/
     //create a random time
     auto timeStart2 = chrono::high_resolution_clock::now();
-    Time timeStart = Time(9, 0, 0); // Create a Time object with the current time
-    Time timeClone = timeStart.clone(); // Clone the time object
-    /*Time* time1 = &timeClone;
-    Time time2 = Time(20,20,0);
-    //time1->add_seconds(900); // Add 900 seconds to the time
-    //time2.difference(*time1);
-    //time2.isEarlierThan(*time1);
-    //time1->isEarlierThan(time2);
-    time1->difference(time2);
+    Time* timeStart = new Time(9, 0, 0); // Create a Time object with the current time
+    Time* timeClone = timeStart->clone(); // Clone the time object
+    Time* time1 = timeStart->clone();
+    Time* time2 = new Time(8,20,0);
+    time1->add_seconds(900); // Add 900 seconds to the time
+    int test =time2->difference(time1);
+    cout << "test diff:"<<test<<endl;
+    int test2 = time1->difference(time2);
     cout<< "Testing 3";
-    timeStart.print();*/
+    cout << "test diff1:"<<test2<<endl;
+    timeStart->print();
     vector<pair<double,vector<Edge*>>> nodes= manager.shortestPath(Coordinates(-8.6190758,41.1570994),Coordinates(-8.5984257,41.1783583),timeClone,900000000); // Find the shortest path between two coordinates
     auto timeEnd = chrono::high_resolution_clock::now();
     auto deltaTime = chrono::duration_cast<chrono::seconds>(timeEnd - timeStart2);
     cout<< "Testing 3";
-    timeStart.print();
+    timeStart->print();
     for (int i = 1; i >=0; i--) {
         //manager.printPath(nodes[i].second); // Print the path
         manager.newPrintPath(nodes[i].second,timeStart); // Print the path

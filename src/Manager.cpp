@@ -192,7 +192,7 @@ void Manager::ReadRoutesStops(const string& filename, string type) {
                 Time* edge_scheduled_departure_time = new Time(*(prev_stop.departure_time)); // Crucial: Edge gets its OWN Time object
 
                 // Travel time = arrival at current_stop - departure from prev_stop
-                int travelTimeSeconds = current_arrival_time->difference(*(prev_stop.departure_time));
+                int travelTimeSeconds = current_arrival_time->difference(prev_stop.departure_time);
 
                 if (travelTimeSeconds < 0) {
                     cerr << "Warning: Negative travel time for trip " << trip_id << " from " << startingNode->id << " (depart ";
@@ -240,7 +240,7 @@ void Manager::ReadGTFS(const string& filename,string type){
 void Manager::printPath(const vector<Edge*>& path) const{
     cout << "Shortest path:" <<path.size()<< endl; // Print the shortest path
     int timeCounter = 0;
-    Time prevTime = path[0]->time->clone();
+    Time* prevTime = path[0]->time->clone();
     for (auto& edge : path) {
         string startingNodeId = edge->startingNode != nullptr ? edge->startingNode->id : "start"; // Get the starting node ID
         string destinationNodeId = edge->destinationNode != nullptr ? edge->destinationNode->id : "destination"; // Get the destination node ID
@@ -249,13 +249,13 @@ void Manager::printPath(const vector<Edge*>& path) const{
         Node* StartingNode =graph.getNode(startingNodeId);
         Node* DestinationNode = graph.getNode(destinationNodeId);
         if (StartingNode != nullptr && DestinationNode != nullptr) {
-            Time startTime = prevTime;
-            Time destTime = prevTime.clone();
-            destTime.add_seconds(edge->travelTime);
+            Time* startTime = prevTime;
+            Time* destTime = prevTime->clone();
+            destTime->add_seconds(edge->travelTime);
             int difference = edge->time->difference(startTime);
             if (difference !=0) {
                 cout << "Time arrived at the station ";
-                destTime.print();
+                destTime->print();
                 cout<<endl;
                 cout<< "Time leaving the station";
                 edge->time->print();
@@ -263,7 +263,7 @@ void Manager::printPath(const vector<Edge*>& path) const{
                 cout<<endl;
                 cout<<"Transfer Wait :"<<difference/60<<" minutes "<<difference%60<<" seconds"<<endl;
             }
-            destTime.add_seconds(difference);
+            destTime->add_seconds(difference);
             prevTime = destTime;
 
         }
@@ -304,26 +304,26 @@ vector<Edge*> Manager::getKNearestFootEdges(Node* node, int k)const {
 }
 
 
-double A_star_heuristic(const Node* currNode, const Coordinates goal,const Edge* edge= nullptr,const int a_star_multiplier=1.5,const Time* currTime= nullptr){
+double A_star_heuristic(const Node* currNode, const Coordinates goal,const Edge* edge= nullptr,const float a_star_multiplier=2.5,const Time* currTime= nullptr){
     if(edge == nullptr || currTime == nullptr){
         return currNode->coordinates.haversineDistance(goal)*a_star_multiplier + currNode->distance;
     }
-    int const timeDiff = edge->time == nullptr ? 0 : edge->time->difference(currTime->clone()); // Calculate the time difference
+    int const timeDiff = edge->time->difference(currTime->clone()); // Calculate the time difference
     //cout<<"Edge diff "<<timeDiff<<"\n"<<endl;
-    return currNode->coordinates.haversineDistance(goal)*a_star_multiplier+edge->travelTime + currNode->distance + timeDiff;
+    return edge->destinationNode->coordinates.haversineDistance(goal)*a_star_multiplier + edge->travelTime + currNode->distance + timeDiff;
 }
-vector<Edge*> Manager::shortestPathAstar(Node* startNode, const Coordinates& goal,double max_tentative,Time startTime,float const a_star_multiplier) const{
+vector<Edge*> Manager::shortestPathAstar(Node* startNode, const Coordinates& goal,double max_tentative,Time* startTime,float const a_star_multiplier) const{
     vector<Edge*> path; // Vector to store the path
     Node* bestPoint =startNode;
     Node* closestNode =startNode;
     startNode->visited = true;
-    startNode->distance = startNode->coordinates.haversineDistance(startNode->coordinates); // Set the distance of the start node to the distance to the goal
-    startNode->arrivalTime = startTime;
+    startNode->distance = 0; // Set the distance of the start node to the distance to the goal
+    startNode->arrivalTime = startTime->clone();
     double bestDistance = A_star_heuristic(startNode,goal,nullptr,a_star_multiplier); // Set the best distance to the goal coordinates
-    cout << "Debug distance " <<bestDistance<< endl;
+    cout << "First Debug distance " <<bestDistance<< endl;
     // Priority queue (open set)
     priority_queue<Node*> openSet;
-    bestPoint->bestDistance = bestPoint->coordinates.haversineDistance(goal); // Set the best distance to the goal coordinates
+    bestPoint->bestDistance = bestDistance; // Set the best distance to the goal coordinates
     // Create start node
     openSet.push(startNode);
     double counter = 0;
@@ -335,55 +335,36 @@ vector<Edge*> Manager::shortestPathAstar(Node* startNode, const Coordinates& goa
             break;
         }
         Node* current = openSet.top();
-        Coordinates currentCords = current->coordinates; // Get the current node
         openSet.pop();
+        current->visited = true; // Mark the neighbor as visited Dont use neighboor
         // Explore neighbors
         vector<Edge*> directions = graph.getAdjacentEdges(current->id);
         vector<Edge*> footDirections =getKNearestFootEdges(current, 5); // Get the k nearest foot edges
-        //directions.insert(directions.end(), footDirections.begin(), footDirections.end()); // Add the foot edges to the directions
         for (const auto& dir : directions) {
             Node* neighbor = dir->destinationNode; // Get the neighboring node
-            //cout << "test1 " << neighbor->id;
-            /*if (neighbor->id == "metro5775") {
-                cout << "end "<<dir->travelTime << endl;
-                cout << "end1 " <<dir->rideName << endl;
-                neighbor->arrivalTime.print();
-            }*/
             if (neighbor->visited) {
                 continue; // Skip if the neighbor has already been visited
             }
-            //cout<< "Test2"<<endl;
-            // Calculate tentative g-score
-            int const waitingForStop  = dir->time !=nullptr ? dir->time->difference(current->arrivalTime) : 0; // Calculate the waiting time at the stop
-            bool isEarlier = dir->time->isEarlierThan(current->arrivalTime); // Check if the current time is earlier than the edge time
-            if (isEarlier) {
-                continue;
-            }
-            //cout<<"Negative waiting time  :"<<waitingForStop<<endl;
-            //cout<< "Edge time: \n";
-            //current->arrivalTime.print();
-            //dir->time->print();
-            //cout<< "\n\n";
-            //current->arrivalTime.print();
-            double tentativeG = A_star_heuristic(current,goal,dir,a_star_multiplier,&current->arrivalTime); // Calculate the tentative g-score
-            //cout<<"tentative G"<<tentativeG<<endl;
-            // If neighbor is new or a better path is found
-            //cout << "test " << tentativeG<<endl;
-            if (neighbor->bestDistance > tentativeG) {
-                //cout << "Debug1";
+            //calculate waiting time
+            int const waitingForStop  = dir->time->difference(current->arrivalTime); // Calculate the waiting time at the stop
+
+            double newHeuristic = A_star_heuristic(current,goal,dir,a_star_multiplier,current->arrivalTime); // Calculate the tentative g-score
+            //add stuff
+            if (neighbor->bestDistance > newHeuristic) {
                 int const deltaTime =dir->travelTime + waitingForStop;
                 neighbor->distance = current->distance + deltaTime;//calculate the distance travel to this node
 
-                neighbor->arrivalTime = current->arrivalTime.clone();
-                neighbor->arrivalTime.add_seconds(deltaTime); // Update the arrival time
+                neighbor->arrivalTime = current->arrivalTime->clone();
+                neighbor->arrivalTime->add_seconds(deltaTime); // Update the arrival time
 
-                neighbor->bestDistance = tentativeG; // Update the best distance
+                neighbor->bestDistance = newHeuristic; // Update the best distance
                 neighbor->previous = dir; // Set the previous edge
-                neighbor->visited = true; // Mark the neighbor as visited Dont use neighboor
+
                 openSet.push(neighbor);
                 //cout<< "Test3"<<endl;
+                //keep track of the best node
                 if(neighbor->bestDistance < bestDistance){
-                    cout << "Found Best ROute\n";
+                    //cout << "Found Best ROute\n";
                     bestDistance = neighbor->bestDistance; // Update the best distance
                     closestNode = neighbor; // Update the closest node
                 }
@@ -409,7 +390,7 @@ vector<Edge*> Manager::shortestPathAstar(Node* startNode, const Coordinates& goa
 bool sortPaths(const pair<double, vector<Edge*>>& a, const pair<double, vector<Edge*>>& b){
     return a.first < b.first;
 }
-vector<pair<double,vector<Edge*>>> Manager::shortestPath(const Coordinates& start, const Coordinates& goal,Time startTime,double max_tentative,const int alternatives,const float a_star_multiplier) const{
+vector<pair<double,vector<Edge*>>> Manager::shortestPath(const Coordinates& start, const Coordinates& goal,Time* startTime,double max_tentative,const int alternatives,const float a_star_multiplier) const{
     vector<Point3D> nearestNodes= kdTree.kNearestNeighbors(start.toPoint3D(), alternatives); // Get the k nearest neighbors
     vector<Node*> startNodes;
     vector<float> distances_TMP;
@@ -425,23 +406,24 @@ vector<pair<double,vector<Edge*>>> Manager::shortestPath(const Coordinates& star
         counter++;
         graph.reset();
         float distanceWithEuristic = distances_TMP[counter]*a_star_multiplier;
-        Time currTime = startTime.clone();
-        currTime.add_seconds(distanceWithEuristic);
+        Time* currTime = startTime->clone();
+        currTime->add_seconds(distanceWithEuristic);
         vector<Edge*> path = shortestPathAstar(station,goal,max_tentative,currTime,a_star_multiplier); // Find the shortest path
 
         cout<<"\nStation : "<<station->name<<endl;
-        Time startTimeTmp = startTime.clone();
+        Time* startTimeTmp = startTime->clone();
 
-        path.insert(path.begin(), new Edge(nullptr,station, &startTimeTmp,
+        path.insert(path.begin(), new Edge(nullptr,station, startTimeTmp,
             distanceWithEuristic,"foot"));
 
         // get distance of the last edge
         Node* last = path.front()->destinationNode; // Get the last edge
-        double distance = last->bestDistance + distances_TMP[counter]*a_star_multiplier;
+        double distance = last->bestDistance + distanceWithEuristic;
 
-
+        cout << "RESULTS--------------------------------------------------";
         cout << "All distance : " << distance << endl; // Print the distance
         cout<<"Distance to the first station:" <<distanceWithEuristic<<endl;
+        cout << "RESULTS--SHOW---------------------------------------------";
 
 
         result.push_back(make_pair(distance,path)); // Add the distance and path to the result
@@ -484,7 +466,7 @@ void Manager::printAllEdges() const {
     cout << "Total number of edges: " << graph.getEdgeCount() << endl;
 }
 
-void Manager::newPrintPath(const vector<Edge*>& path, Time journeyStartTime) const {
+void Manager::newPrintPath(const vector<Edge*>& path, Time* journeyStartTime) const {
     if (path.empty()) {
         cout << "Path is empty." << endl;
         return;
@@ -494,10 +476,10 @@ void Manager::newPrintPath(const vector<Edge*>& path, Time journeyStartTime) con
     cout << "               ROUTE DETAILS" << endl;
     cout << "==========================================================" << endl;
     cout << "Journey initially started at: ";
-    journeyStartTime.print(); // Assumes journeyStartTime is the absolute start before any travel.
+    journeyStartTime->print(); // Assumes journeyStartTime is the absolute start before any travel.
     cout << "----------------------------------------------------------" << endl;
 
-    Time currentEffectiveTime = journeyStartTime.clone(); // Tracks the traveller's time progression.
+    Time* currentEffectiveTime = journeyStartTime->clone(); // Tracks the traveller's time progression.
                                              // For the first leg (foot), this is the departure time.
                                              // For transit, this will become the arrival time at the previous stop.
 
@@ -531,60 +513,60 @@ void Manager::newPrintPath(const vector<Edge*>& path, Time journeyStartTime) con
         cout << "Leg " << i + 1 << ": Take " << edge->type
              << " from [" << legStartName << "] to [" << legDestName << "]" << endl;
 
-        Time legDepartureTime;
+        Time* legDepartureTime;
 
         if (edge->type == "foot") {
             // For foot travel, departure is immediate from currentEffectiveTime
             legDepartureTime = currentEffectiveTime;
             cout << "  Depart (walking): ";
-            legDepartureTime.print();
+            legDepartureTime->print();
         } else { // Transit edge
             if (edge->time) { // Scheduled departure time for this transit service
-                legDepartureTime = *(edge->time);
+                legDepartureTime = edge->time->clone();
                 // Calculate wait time at legStartNode
                 // currentEffectiveTime is arrival at legStartNode from previous leg
                 if (legStartNode) { // Ensure there's a station we arrived at
-                    int waitSeconds = legDepartureTime.difference(currentEffectiveTime);
+                    int waitSeconds = legDepartureTime->difference(currentEffectiveTime);
                     if (waitSeconds < 0) {
                         // This case (scheduled departure is before arrival at stop)
                         // should ideally be prevented by A* logic.
                         // Print a warning or handle as an issue.
                         cout << "  WARNING: Scheduled departure is BEFORE arrival at stop!" << endl;
-                        cout << "    Arrival at " << legStartName << ": "; currentEffectiveTime.print();
-                        cout << "    Scheduled Depart: "; legDepartureTime.print();
+                        cout << "    Arrival at " << legStartName << ": "; currentEffectiveTime->print();
+                        cout << "    Scheduled Depart: "; legDepartureTime->print();
                         // To proceed, we might have to assume we wait for next day or it's an error.
                         // For now, just note it and proceed with scheduled departure.
                     } else if (waitSeconds > 5) { // Only print significant waits (e.g. >5 seconds)
                         cout << "  Wait at [" << legStartName << "]: "
                              << (waitSeconds / 60) << "m " << (waitSeconds % 60) << "s" << endl;
-                        cout << "    (Arrived at stop: "; currentEffectiveTime.print();
-                        cout << "     Scheduled service departure: "; legDepartureTime.print();
+                        cout << "    (Arrived at stop: "; currentEffectiveTime->print();
+                        cout << "     Scheduled service departure: "; legDepartureTime->print();
                         cout << "    )" << endl;
                     }
                 }
                  cout << "  Depart via " << edge->type << " service: ";
-                 legDepartureTime.print();
+                 legDepartureTime->print();
             } else {
                 // Transit edge without a specific schedule? Unlikely with GTFS.
                 // Default to immediate departure from currentEffectiveTime.
-                legDepartureTime = currentEffectiveTime;
+                Time* legDepartureTime = currentEffectiveTime;
                 cout << "  Depart (unscheduled transit): ";
-                legDepartureTime.print();
+                legDepartureTime->print();
             }
         }
 
         // Update currentEffectiveTime: it's now the arrival time at legDestNode
         currentEffectiveTime = legDepartureTime; // Start with the departure time of the current leg
-        currentEffectiveTime.add_seconds(edge->travelTime); // Add this leg's travel duration
+        currentEffectiveTime->add_seconds(edge->travelTime); // Add this leg's travel duration
 
         cout << "  Travel Time for this leg: " << (edge->travelTime / 60) << "m " << (edge->travelTime % 60) << "s" << endl;
         cout << "  Arrive at [" << legDestName << "]: ";
-        currentEffectiveTime.print();
+        currentEffectiveTime->print();
         cout << "----------------------------------------------------------" << endl;
     }
 
     cout << "Total Estimated Journey Time: ";
-    int totalSeconds = currentEffectiveTime.difference(journeyStartTime); // journeyStartTime is the absolute start
+    int totalSeconds = currentEffectiveTime->difference(journeyStartTime); // journeyStartTime is the absolute start
     int totalHours = totalSeconds / 3600;
     int totalMinutes = (totalSeconds % 3600) / 60;
     int remainingSeconds = totalSeconds % 60;

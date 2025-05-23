@@ -15,6 +15,7 @@ void Node::reset(){
     previous = nullptr; // Previous node in the path
     visited = false; // Flag to check if the node has been visited
     bestDistance = std::numeric_limits<double>::max(); // Best distance to the node
+    arrivalTime = nullptr;
 }
 
 Point3D Node::toPoint3D() const{ // Create a Coordinates object
