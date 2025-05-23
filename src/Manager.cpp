@@ -308,13 +308,12 @@ double A_star_heuristic(const Node* currNode, const Coordinates goal,const Edge*
     if(edge == nullptr || currTime == nullptr){
         return currNode->coordinates.haversineDistance(goal)*a_star_multiplier + currNode->distance;
     }
-    int const timeDiff = edge->time == nullptr ? 0 : edge->time->difference(*currTime); // Calculate the time difference
+    int const timeDiff = edge->time == nullptr ? 0 : edge->time->difference(currTime->clone()); // Calculate the time difference
     //cout<<"Edge diff "<<timeDiff<<"\n"<<endl;
     return currNode->coordinates.haversineDistance(goal)*a_star_multiplier+edge->travelTime + currNode->distance + timeDiff;
 }
-vector<Edge*> Manager::shortestPathAstar(Node* startNode, const Coordinates& goal,double max_tentative,Time startTime) const{
+vector<Edge*> Manager::shortestPathAstar(Node* startNode, const Coordinates& goal,double max_tentative,Time startTime,float const a_star_multiplier) const{
     vector<Edge*> path; // Vector to store the path
-    const float a_star_multiplier=2;
     Node* bestPoint =startNode;
     Node* closestNode =startNode;
     startNode->visited = true;
@@ -426,12 +425,14 @@ vector<pair<double,vector<Edge*>>> Manager::shortestPath(const Coordinates& star
         counter++;
         graph.reset();
         float distanceWithEuristic = distances_TMP[counter]*a_star_multiplier;
-        startTime.add_seconds(distanceWithEuristic);
-
-        vector<Edge*> path = shortestPathAstar(station,goal,max_tentative,startTime); // Find the shortest path
+        Time currTime = startTime.clone();
+        currTime.add_seconds(distanceWithEuristic);
+        vector<Edge*> path = shortestPathAstar(station,goal,max_tentative,currTime,a_star_multiplier); // Find the shortest path
 
         cout<<"\nStation : "<<station->name<<endl;
-        path.insert(path.begin(), new Edge(nullptr,station, &startTime,
+        Time startTimeTmp = startTime.clone();
+
+        path.insert(path.begin(), new Edge(nullptr,station, &startTimeTmp,
             distanceWithEuristic,"foot"));
 
         // get distance of the last edge
@@ -444,7 +445,7 @@ vector<pair<double,vector<Edge*>>> Manager::shortestPath(const Coordinates& star
 
 
         result.push_back(make_pair(distance,path)); // Add the distance and path to the result
-        printPath(path);
+        //printPath(path);
 
     }
     std::sort(result.begin(), result.end(),sortPaths);
@@ -496,7 +497,7 @@ void Manager::newPrintPath(const vector<Edge*>& path, Time journeyStartTime) con
     journeyStartTime.print(); // Assumes journeyStartTime is the absolute start before any travel.
     cout << "----------------------------------------------------------" << endl;
 
-    Time currentEffectiveTime = journeyStartTime; // Tracks the traveller's time progression.
+    Time currentEffectiveTime = journeyStartTime.clone(); // Tracks the traveller's time progression.
                                              // For the first leg (foot), this is the departure time.
                                              // For transit, this will become the arrival time at the previous stop.
 
