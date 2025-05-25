@@ -39,15 +39,7 @@ int main(){
     auto timeStart2 = chrono::high_resolution_clock::now();
     Time timeStart = Time(9, 0, 0); // Create a Time object with the current time
     Time timeClone = timeStart.clone(); // Clone the time object
-    /*Time* time1 = &timeClone;
-    Time time2 = Time(20,20,0);
-    //time1->add_seconds(900); // Add 900 seconds to the time
-    //time2.difference(*time1);
-    //time2.isEarlierThan(*time1);
-    //time1->isEarlierThan(time2);
-    time1->difference(time2);
-    cout<< "Testing 3";
-    timeStart.print();*/
+
     vector<pair<double,vector<Edge*>>> nodes= manager.shortestPath(Coordinates(-8.6190758,41.1570994),Coordinates(-8.5984257,41.1783583),timeClone,900000000); // Find the shortest path between two coordinates
     auto timeEnd = chrono::high_resolution_clock::now();
     auto deltaTime = chrono::duration_cast<chrono::seconds>(timeEnd - timeStart2);
@@ -59,23 +51,5 @@ int main(){
     }
     cout<<"Time taken: "<<deltaTime.count()/60<<" Minutes "<<deltaTime.count()%60<<" seconds" << endl;
 
-    //test nearest neighbors
-
-    /*
-    auto start = std::chrono::high_resolution_clock::now(); // Start the timer
-    Point3D point = manager.kdTree.nearestNeighbor(Coordinates(-8.6190758,41.1570994).toPoint3D()); // Find the nearest neighbor to a given point
-    auto end = std::chrono::high_resolution_clock::now(); // End the timer
-    std::chrono::duration<double> elapsed = end - start; // Calculate the elapsed time
-    cout << "Elapsed time: " << elapsed.count() << " seconds" << endl; // Print the elapsed time
-    cout << "Nearest neighbor ID: " << point.id << endl; // Print the ID of the nearest neighbor,
-
-    auto start1 = std::chrono::high_resolution_clock::now(); // Start the timer
-    vector<Point3D> points = manager.kdTree.kNearestNeighbors(Coordinates(-8.6190758,41.1570994).toPoint3D(), 5); // Find the k nearest neighbors to a given point
-    auto end1 = std::chrono::high_resolution_clock::now(); // End the timer
-    std::chrono::duration<double> elapsed1 = end1 - start1; // Calculate the elapsed time
-    cout << "Elapsed time: " << elapsed1.count() << " seconds" << endl; // Print the elapsed time
-    for (const auto& p : points) {
-        cout << "K Nearest neighbor ID: " << p.id << endl; // Print the ID of the k nearest neighbors
-    }*/
     return 0;
 }
