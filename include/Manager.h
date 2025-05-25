@@ -73,7 +73,7 @@ class Manager {
         * @return A vector of pairs, where each pair consists of the path cost and the path itself.
         */
         vector<pair<double,vector<Edge*>>> shortestPath(const Coordinates& start, const Coordinates& goal,Time startTime,double max_tentative=1000000000,
-                                                        const int alternatives=15,const float a_star_multiplier=2) const; // Function to find the shortest path between two coordinates
+                                                        const int alternatives=15,const float a_star_multiplier=2); // Function to find the shortest path between two coordinates
 
        /**
        * @brief Constructor for the Manager class.

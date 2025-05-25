@@ -37,11 +37,8 @@ class Graph {
 
         /**
         * @brief Resets aspects of the graph or its nodes.
-        * @note The `const` qualifier might be problematic if this method intends to modify
-        * internal state of nodes (e.g., visited flags for algorithms) unless
-        * those members are declared `mutable`.
         */
-        void reset()const ;
+        void reset();
 
         /**
         * @brief Gets all nodes in the graph.
