@@ -19,10 +19,10 @@ int main(){
     //manager.ReadGTFS("../data/mdb-2027-202504140043","comboio");
     //manager.ReadGTFS("../data/tld-651-202504210112");
     ////manager.ReadGTFS("../data/c1","c1");
-    //manager.ReadGTFS("../data/c2","c2");
+    manager.ReadGTFS("../data/c2","c2");
     ////manager.ReadGTFS("../data/c3","c3");
-    //manager.ReadGTFS("../data/c4","c4");
-    //manager.ReadGTFS("../data/germany","germany");
+    manager.ReadGTFS("../data/c4","c4");
+    manager.ReadGTFS("../data/germany","germany");
     manager.buildKDTree(); // Build a KD-Tree from the graph data
     auto timeEnd1 = chrono::high_resolution_clock::now();
     auto deltaTime1 = chrono::duration_cast<chrono::seconds>(timeEnd1 - timeStart1);
