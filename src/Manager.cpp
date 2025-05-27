@@ -362,7 +362,7 @@ vector<Edge*> Manager::shortestPathAstar(Node* startNode, const Coordinates& goa
         // Explore neighbors
         vector<Edge*> directions = graph.getAdjacentEdges(current->id);
         vector<Edge*> footDirections = getKNearestFootEdges(current, 5,a_star_multiplier);
-        directions.insert(directions.end(), footDirections.begin(), footDirections.end()); // Add the foot edges to the directions
+        //directions.insert(directions.end(), footDirections.begin(), footDirections.end()); // Add the foot edges to the directions
 
         for (const auto& dir : directions) {
             Node* neighbor = dir->destinationNode; // Get the neighboring node

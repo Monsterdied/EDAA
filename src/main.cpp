@@ -189,10 +189,10 @@ int main(){
     //manager.ReadGTFS("../data/mdb-2027-202504140043","comboio");
     //manager.ReadGTFS("../data/tld-651-202504210112");
     ////manager.ReadGTFS("../data/c1","c1");
-    manager.ReadGTFS("../data/c2","c2");
+    //manager.ReadGTFS("../data/c2","c2");
     ////manager.ReadGTFS("../data/c3","c3");
-    manager.ReadGTFS("../data/c4","c4");
-    manager.ReadGTFS("../data/germany","germany");
+    //manager.ReadGTFS("../data/c4","c4");
+    //manager.ReadGTFS("../data/germany","germany");
     manager.buildKDTree(); // Build a KD-Tree from the graph data
     auto timeEnd1 = chrono::high_resolution_clock::now();
     auto deltaTime1 = chrono::duration_cast<chrono::seconds>(timeEnd1 - timeStart1);
@@ -201,7 +201,7 @@ int main(){
 
     // Run the benchmarks
     //performPathfindingBenchmark(manager);
-    //performPathQualityAnalysis(manager);
+    performPathQualityAnalysis(manager);
 
     //time
     //
@@ -212,12 +212,12 @@ int main(){
         cout<<"node "<<node->name<<"id "<<node->id<<endl;
     }*/
     //create a random time
-
+    /*
     auto timeStart2 = chrono::high_resolution_clock::now();
     Time timeStart = Time(9, 0, 0); // Create a Time object with the current time
     Time timeClone = timeStart.clone(); // Clone the time object
 
-    vector<pair<double,vector<Edge*>>> nodes= manager.shortestPath(Coordinates(-8.662980, 41.191962), Coordinates(-8.595707, 41.177225),timeClone,900000000, 15, 2.5); // Find the shortest path between two coordinates
+    vector<pair<double,vector<Edge*>>> nodes= manager.shortestPath(Coordinates(-8.662980, 41.191962), Coordinates(-8.595707, 41.177225),timeClone,900000000, 15, 1); // Find the shortest path between two coordinates
     auto timeEnd = chrono::high_resolution_clock::now();
     auto deltaTime = chrono::duration_cast<chrono::seconds>(timeEnd - timeStart2);
     cout<< "Testing 3";
@@ -227,7 +227,7 @@ int main(){
         manager.newPrintPath(nodes[i].second,timeStart); // Print the path
     }
     cout<<"Time taken: "<<deltaTime.count()/60<<" Minutes "<<deltaTime.count()%60<<" seconds" << endl;
-
+    */
     return 0;
 }
 
