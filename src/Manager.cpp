@@ -354,9 +354,9 @@ vector<Edge*> Manager::shortestPathAstar(Node* startNode, const Coordinates& goa
         Node* current = openSet.top();
         openSet.pop();
 
-        if (current->visited) {
+        /*if (current->visited) {
             continue;
-        }
+        }*/
         current->visited = true;
 
         // Explore neighbors
@@ -367,15 +367,15 @@ vector<Edge*> Manager::shortestPathAstar(Node* startNode, const Coordinates& goa
         for (const auto& dir : directions) {
             Node* neighbor = dir->destinationNode; // Get the neighboring node
 
-            if (neighbor->visited) {
+            /*if (neighbor->visited) {
                 continue; // Skip if the neighbor has already been visited
-            }
+            }*/
 
             // Calculate tentative g-score
-            int const waitingForStop  = dir->time !=nullptr ? dir->time->difference(current->arrivalTime) : 0; // Calculate the waiting time at the stop
+            int const waitingForStop  =dir->time->difference(current->arrivalTime); // Calculate the waiting time at the stop
 
-            if (dir->time != nullptr && (dir->time->isEarlierThan(current->arrivalTime) || waitingForStop < 0)) {
-                continue;
+            if (waitingForStop < 0) {
+                cout<<"Error ALERT "<<waitingForStop;
             }
 
             double g_score_current = current->distance;
@@ -438,12 +438,15 @@ bool sortPaths(const pair<double, vector<Edge*>>& a, const pair<double, vector<E
 }
 vector<pair<double,vector<Edge*>>> Manager::shortestPath(const Coordinates& start, const Coordinates& goal,Time startTime,double max_tentative,const int alternatives,const float a_star_multiplier){
     vector<Point3D> nearestNodes= kdTree.kNearestNeighbors(start.toPoint3D(), alternatives); // Get the k nearest neighbors
+    //reverse list
+    //reverse(nearestNodes.begin(), nearestNodes.end());
     vector<Node*> startNodes;
     vector<float> distances_TMP;
     for (const Point3D node : nearestNodes){
         Node* startNode = graph.getNode(node.id); // Get the node from the graph using the ID
         startNodes.push_back(startNode); // Add the node to the vector
         distances_TMP.push_back(startNode->coordinates.haversineDistance(start));
+        cout << "Debug Rodrigo chato: "<<startNode->name <<" "<<startNode->id<< endl;
     }
 
     vector<pair<double,vector<Edge*>>> result;
@@ -472,8 +475,15 @@ vector<pair<double,vector<Edge*>>> Manager::shortestPath(const Coordinates& star
 
 
         result.push_back(make_pair(distance,path)); // Add the distance and path to the result
-        //printPath(path);
+        //cout << "Debug ---------------------------------------------------:"<<endl;
+        //newPrintPath(path,startTime);
 
+    }
+    for (auto i :result) {
+        cout << "Debug ---------------------------------------------------:"<<endl;
+        cout << "Distance: " << i.first << endl; // Print the distance
+        cout <<"First Stop" << i.second.front()->destinationNode->name << endl;
+        //newPrintPath(path,startTime);
     }
     std::sort(result.begin(), result.end(),sortPaths);
     return result; // Return the result

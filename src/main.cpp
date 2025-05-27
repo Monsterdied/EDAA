@@ -201,7 +201,7 @@ int main(){
 
     // Run the benchmarks
     //performPathfindingBenchmark(manager);
-    performPathQualityAnalysis(manager);
+    //performPathQualityAnalysis(manager);
 
     //time
     //
@@ -212,7 +212,7 @@ int main(){
         cout<<"node "<<node->name<<"id "<<node->id<<endl;
     }*/
     //create a random time
-    /*
+
     auto timeStart2 = chrono::high_resolution_clock::now();
     Time timeStart = Time(9, 0, 0); // Create a Time object with the current time
     Time timeClone = timeStart.clone(); // Clone the time object
@@ -227,7 +227,7 @@ int main(){
         manager.newPrintPath(nodes[i].second,timeStart); // Print the path
     }
     cout<<"Time taken: "<<deltaTime.count()/60<<" Minutes "<<deltaTime.count()%60<<" seconds" << endl;
-    */
+
     return 0;
 }
 
