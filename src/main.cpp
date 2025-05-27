@@ -219,7 +219,7 @@ int main(){
     vector<pair<double,vector<Edge*>>> nodes= manager.shortestPath(Coordinates(-8.662980, 41.191962), Coordinates(-8.595707, 41.177225),timeClone,900000000, 15, 1); // Find the shortest path between two coordinates
     auto timeEnd = chrono::high_resolution_clock::now();
     auto deltaTime = chrono::duration_cast<chrono::seconds>(timeEnd - timeStart2);
-    for (int i = 1; i >=0; i--) {
+    for (int i = 3; i >=0; i--) {
         //manager.printPath(nodes[i].second); // Print the path
         manager.newPrintPath(nodes[i].second,timeStart); // Print the path
     }

@@ -11,6 +11,8 @@
 #include <vector>
 #include <string>
 #include <iomanip>
+#include <algorithm>
+#include <random>
 using namespace std;
 
 struct CompareNodesByBestDistance {
@@ -306,15 +308,23 @@ vector<Edge*> Manager::getKNearestFootEdges(Node* node, int k,float const a_star
             continue; // Skip if the foot node is the same as the current node
         }
         if (footNode != nullptr) {
-            int const distance = node->coordinates.haversineDistance(footNode->coordinates)*(a_star_multiplier+2); // Calculate the distance to the foot node
+            int const distance = node->coordinates.haversineDistance(footNode->coordinates)*(a_star_multiplier +0.5); // Calculate the distance to the foot node
 
-            Edge* edge = new Edge(node, footNode, nullptr, distance, "foot"); // Create a new edge with the foot node
-            edge->rideName = "DEBUG1";
+            Edge* edge = new Edge(node, footNode, node->arrivalTime->clone(), distance, "foot"); // Create a new edge with the foot node
             footEdgesVector.push_back(edge); // Add the edge to the vector
         }else {
             cout<<"Bugged";
         }
     }
+    //implement some randomness to the foot edges
+    // Ensure we don't request more elements than exist
+    vector<Edge*> result;
+    int count = std::min(3, static_cast<int>(footEdgesVector.size()));
+
+    // Get unique random elements
+    std::sample(footEdgesVector.begin(), footEdgesVector.end(), std::back_inserter(result),
+                count, std::mt19937{std::random_device{}()});
+
     return footEdgesVector; // Return the vector of foot edges
 }
 
@@ -330,9 +340,6 @@ double A_star_heuristic(const Node* currNode, const Coordinates goal,const Edge*
 vector<Edge*> Manager::shortestPathAstar(Node* startNode, const Coordinates& goal,double max_tentative,Time* startTime,float const a_star_multiplier) const{
     vector<Edge*> path; // Vector to store the path
     Node* closestNode =startNode;
-    if (startNode->name=="Vasco da Gama") {
-        cout<<"Vasco da Gama";
-    }
     startNode->distance = 0;
     startNode->arrivalTime = startTime;
     startNode->bestDistance = startNode->coordinates.haversineDistance(goal) * a_star_multiplier;
@@ -364,7 +371,7 @@ vector<Edge*> Manager::shortestPathAstar(Node* startNode, const Coordinates& goa
         // Explore neighbors
         vector<Edge*> directions = graph.getAdjacentEdges(current->id);
         vector<Edge*> footDirections = getKNearestFootEdges(current, 5,a_star_multiplier);
-        //directions.insert(directions.end(), footDirections.begin(), footDirections.end()); // Add the foot edges to the directions
+        directions.insert(directions.end(), footDirections.begin(), footDirections.end()); // Add the foot edges to the directions
 
         for (const auto& dir : directions) {
             Node* neighbor = dir->destinationNode; // Get the neighboring node
@@ -448,7 +455,6 @@ vector<pair<double,vector<Edge*>>> Manager::shortestPath(const Coordinates& star
         Node* startNode = graph.getNode(node.id); // Get the node from the graph using the ID
         startNodes.push_back(startNode); // Add the node to the vector
         distances_TMP.push_back(startNode->coordinates.haversineDistance(start));
-        cout << "Debug Rodrigo chato: "<<startNode->name <<" "<<startNode->id<< endl;
     }
 
     vector<pair<double,vector<Edge*>>> result;
@@ -461,7 +467,6 @@ vector<pair<double,vector<Edge*>>> Manager::shortestPath(const Coordinates& star
         currTime->add_seconds(distanceWithEuristic);
         vector<Edge*> path = shortestPathAstar(station,goal,max_tentative,currTime,a_star_multiplier); // Find the shortest path
 
-        cout<<"\nStation : "<<station->name<<endl;
         Time* startTimeTmp = startTime->clone();
 
         path.insert(path.begin(), new Edge(nullptr,station, startTimeTmp,
