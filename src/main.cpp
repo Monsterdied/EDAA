@@ -189,10 +189,10 @@ int main(){
     //manager.ReadGTFS("../data/mdb-2027-202504140043","comboio");
     //manager.ReadGTFS("../data/tld-651-202504210112");
     ////manager.ReadGTFS("../data/c1","c1");
-    //manager.ReadGTFS("../data/c2","c2");
+    manager.ReadGTFS("../data/c2","c2");
     ////manager.ReadGTFS("../data/c3","c3");
-    //manager.ReadGTFS("../data/c4","c4");
-    //manager.ReadGTFS("../data/germany","germany");
+    manager.ReadGTFS("../data/c4","c4");
+    manager.ReadGTFS("../data/germany","germany");
     manager.buildKDTree(); // Build a KD-Tree from the graph data
     auto timeEnd1 = chrono::high_resolution_clock::now();
     auto deltaTime1 = chrono::duration_cast<chrono::seconds>(timeEnd1 - timeStart1);
@@ -216,7 +216,7 @@ int main(){
     auto timeStart2 = chrono::high_resolution_clock::now();
     Time* timeStart = new Time(9, 0, 0); // Create a Time object with the current time
     Time* timeClone = timeStart->clone(); // Clone the Time object to use in the pathfinding
-    vector<pair<double,vector<Edge*>>> nodes= manager.shortestPath(Coordinates(-8.662980, 41.191962), Coordinates(-8.595707, 41.177225),timeClone,900000000, 15, 1); // Find the shortest path between two coordinates
+    vector<pair<double,vector<Edge*>>> nodes= manager.shortestPath(Coordinates(-8.6190758,41.1570994), Coordinates(-8.595707, 41.177225),timeClone,50000, 15, 1); // Find the shortest path between two coordinates
     auto timeEnd = chrono::high_resolution_clock::now();
     auto deltaTime = chrono::duration_cast<chrono::seconds>(timeEnd - timeStart2);
     for (int i = 3; i >=0; i--) {

@@ -72,7 +72,7 @@ class Manager {
         * @param a_star_multiplier Multiplier for the A* heuristic.
         * @return A vector of pairs, where each pair consists of the path cost and the path itself.
         */
-        vector<pair<double,vector<Edge*>>> shortestPath(const Coordinates& start, const Coordinates& goal,Time* startTime,double max_tentative=1000000000,
+        vector<pair<double,vector<Edge*>>> shortestPath(const Coordinates& start, const Coordinates& goal,Time* startTime,double max_tentative=50000,
                                                         const int alternatives=15,const float a_star_multiplier=2); // Function to find the shortest path between two coordinates
 
        /**
