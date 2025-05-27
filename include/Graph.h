@@ -7,24 +7,75 @@ using namespace std;
 #include "Edge.h"
 #include <vector>
 #include <string>
-#include <utility> 
+#include <utility>
+
+/**
+ * @class Graph
+ * @brief Represents a graph using an adjacency list, by managing a list of nodes and edges.
+*/
 class Graph {
     private:
-        // Adjacency list representation of the graph
+        /**
+        * @brief Adjacency list representation of the graph.
+        * Maps a node ID (string) to a vector of Edge pointers representing outgoing edges.
+        */
         unordered_map<string, vector<Edge*>> adjList; 
 
-        // List of nodes in the graph
+        /**
+         * @brief Map of nodes in the graph.
+         * Maps a node ID (string) to the Node object.
+        */
         unordered_map<string, Node*> nodes;	
         
-    public: 
-        //void Graph(); // Constructor to initialize the graph
-        void addNode(Node* node); // Function to add a node to the graph~
-        void reset()const ;
-        unordered_map<string, Node*> getNodes() const; // Function to get all nodes in the graph
-        Node* getNode(const string& id) const; // Function to get a node by its ID
-        void addEdge(Edge* edge); // Function to add an edge between two nodes
+    public:
+
+        /**
+         * @brief Adds a node to the graph.
+         * @param node Node object to be added.
+         */
+        void addNode(Node* node);
+
+        /**
+        * @brief Resets aspects of the graph or its nodes.
+        */
+        void reset();
+
+        /**
+        * @brief Gets all nodes in the graph.
+        * @return An unordered_map where keys are node IDs and values are Node pointers.
+        */
+        unordered_map<string, Node*> getNodes() const;
+
+        /**
+         * @brief Gets a specific node by its ID.
+         * @param id The string ID of the node to retrieve.
+         * @return Pointer to the Node object if found, nullptr otherwise.
+        */
+        Node* getNode(const string& id) const;
+
+        /**
+        * @brief Adds an edge to the graph.
+        * @param edge Pointer to the Edge object to be added.
+        */
+        void addEdge(Edge* edge);
+
+        /**
+         * @brief Gets the total number of nodes in the graph.
+         * @return Number of nodes
+        */
         size_t getNodeCount() const;
+
+        /**
+         * @brief Gets the total number of edges in the graph.
+         * @return Number of edges
+        */
         int getEdgeCount() const ;
+
+        /**
+         * @brief Gets all edges adjacent to a specific node.
+         * @param nodeID The string ID of the node.
+         * @return A vector of Edge pointers. Returns an empty vector if the node is not found or has no outgoing edges.
+        */
         vector<Edge*> getAdjacentEdges(const string& nodeID) const;
 
         

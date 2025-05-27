@@ -13,6 +13,14 @@
 #include <iomanip>
 using namespace std;
 
+struct CompareNodesByBestDistance {
+    bool operator()(const Node* a, const Node* b) const {
+        // '>' for a min-heap when Node::bestDistance stores f_score
+        return a->bestDistance > b->bestDistance;
+    }
+};
+
+
 Manager::Manager(){
 }
 void Manager::buildKDTree(){
@@ -288,16 +296,23 @@ void Manager::printPath(const vector<Edge*>& path) const{
 
 }
 
-vector<Edge*> Manager::getKNearestFootEdges(Node* node, int k)const {
+vector<Edge*> Manager::getKNearestFootEdges(Node* node, int k,float const a_star_multiplier)const {
     vector<Point3D> footEdges = kdTree.kNearestNeighbors(node->toPoint3D(), k); // Get the k nearest foot edges
     vector<Edge*> footEdgesVector;
     for (const auto& footEdge : footEdges) {
         Node* footNode = graph.getNode(footEdge.id); // Get the foot node from the graph using the ID
+        if (footNode->id == node->id) {
+            //cout<<"Bugged";
+            continue; // Skip if the foot node is the same as the current node
+        }
         if (footNode != nullptr) {
-            double distance = node->coordinates.haversineDistance(footNode->coordinates); // Calculate the distance to the foot node
+            int const distance = node->coordinates.haversineDistance(footNode->coordinates)*(a_star_multiplier+2); // Calculate the distance to the foot node
 
             Edge* edge = new Edge(node, footNode, nullptr, distance, "foot"); // Create a new edge with the foot node
+            edge->rideName = "DEBUG1";
             footEdgesVector.push_back(edge); // Add the edge to the vector
+        }else {
+            cout<<"Bugged";
         }
     }
     return footEdgesVector; // Return the vector of foot edges
@@ -314,19 +329,22 @@ double A_star_heuristic(const Node* currNode, const Coordinates goal,const Edge*
 }
 vector<Edge*> Manager::shortestPathAstar(Node* startNode, const Coordinates& goal,double max_tentative,Time* startTime,float const a_star_multiplier) const{
     vector<Edge*> path; // Vector to store the path
-    Node* bestPoint =startNode;
     Node* closestNode =startNode;
-    startNode->visited = true;
-    startNode->distance = 0; // Set the distance of the start node to the distance to the goal
-    startNode->arrivalTime = startTime->clone();
-    double bestDistance = A_star_heuristic(startNode,goal,nullptr,a_star_multiplier); // Set the best distance to the goal coordinates
-    cout << "First Debug distance " <<bestDistance<< endl;
+    if (startNode->name=="Vasco da Gama") {
+        cout<<"Vasco da Gama";
+    }
+    startNode->distance = 0;
+    startNode->arrivalTime = startTime;
+    startNode->bestDistance = startNode->coordinates.haversineDistance(goal) * a_star_multiplier;
+
+    double overallBestFScore = startNode->bestDistance;
+
     // Priority queue (open set)
-    priority_queue<Node*> openSet;
-    bestPoint->bestDistance = bestDistance; // Set the best distance to the goal coordinates
-    // Create start node
+    std::priority_queue<Node*, std::vector<Node*>, CompareNodesByBestDistance> openSet;
     openSet.push(startNode);
+
     double counter = 0;
+
     // A* main loop
     while (!openSet.empty()) {
         counter++;
@@ -334,54 +352,83 @@ vector<Edge*> Manager::shortestPathAstar(Node* startNode, const Coordinates& goa
             cout<< "Breaked\n";
             break;
         }
+
         Node* current = openSet.top();
         openSet.pop();
-        current->visited = true; // Mark the neighbor as visited Dont use neighboor
+
+        /*if (current->visited) {
+            continue;
+        }*/
+        current->visited = true;
+
         // Explore neighbors
         vector<Edge*> directions = graph.getAdjacentEdges(current->id);
-        vector<Edge*> footDirections =getKNearestFootEdges(current, 5); // Get the k nearest foot edges
+        vector<Edge*> footDirections = getKNearestFootEdges(current, 5,a_star_multiplier);
+        //directions.insert(directions.end(), footDirections.begin(), footDirections.end()); // Add the foot edges to the directions
+
         for (const auto& dir : directions) {
             Node* neighbor = dir->destinationNode; // Get the neighboring node
-            if (neighbor->visited) {
+
+            /*if (neighbor->visited) {
                 continue; // Skip if the neighbor has already been visited
+            }*/
+
+            // Calculate tentative g-score
+            int const waitingForStop  =dir->time->difference(current->arrivalTime); // Calculate the waiting time at the stop
+
+            if (waitingForStop < 0) {
+                cout<<"Error ALERT "<<waitingForStop;
             }
-            //calculate waiting time
-            int const waitingForStop  = dir->time->difference(current->arrivalTime); // Calculate the waiting time at the stop
 
-            double newHeuristic = A_star_heuristic(current,goal,dir,a_star_multiplier,current->arrivalTime); // Calculate the tentative g-score
-            //add stuff
-            if (neighbor->bestDistance > newHeuristic) {
-                int const deltaTime =dir->travelTime + waitingForStop;
-                neighbor->distance = current->distance + deltaTime;//calculate the distance travel to this node
+            double cost_current_to_neighbor = dir->travelTime + waitingForStop;
+            double g_score_neighbor = current->distance + cost_current_to_neighbor;
 
+
+            if (g_score_neighbor < neighbor->distance) {
+                neighbor->distance = g_score_neighbor; // Update g-score
+                neighbor->previous = dir;
                 neighbor->arrivalTime = current->arrivalTime->clone();
-                neighbor->arrivalTime->add_seconds(deltaTime); // Update the arrival time
+                neighbor->arrivalTime->add_seconds(cost_current_to_neighbor); // Update arrival time at neighbor
 
-                neighbor->bestDistance = newHeuristic; // Update the best distance
-                neighbor->previous = dir; // Set the previous edge
+                double h_score_neighbor = neighbor->coordinates.haversineDistance(goal) * a_star_multiplier;
+                neighbor->bestDistance = g_score_neighbor + h_score_neighbor; // Update f-score
 
                 openSet.push(neighbor);
-                //cout<< "Test3"<<endl;
-                //keep track of the best node
-                if(neighbor->bestDistance < bestDistance){
-                    //cout << "Found Best ROute\n";
-                    bestDistance = neighbor->bestDistance; // Update the best distance
-                    closestNode = neighbor; // Update the closest node
+
+                // Update the overall closest node found to the goal coordinates based on f-score
+                if (neighbor->bestDistance < overallBestFScore) {
+                    overallBestFScore = neighbor->bestDistance;
+                    closestNode = neighbor;
                 }
+
             }
+
         }
     }
-    cout<<"router found"<<endl;
-    Edge* edge = closestNode->previous; // Get the previous edge
-    Node* finalGoal =new Node("goal",goal.latitude,goal.longitude);
-    finalGoal->distance = closestNode->bestDistance; // Set the distance of the goal node
-    cout<<"Final goal: "<<finalGoal->distance<<endl;
-    path.push_back(new Edge(closestNode, finalGoal, nullptr,closestNode->coordinates.haversineDistance(goal)*a_star_multiplier,"foot"));
+    cout << "A* search finished. Reconstructing path from node: " << closestNode->id << endl;
+
+    if (closestNode->previous == nullptr && closestNode != startNode) {
+        cout << "Warning: closestNode has no previous edge and is not the startNode. Path might be incomplete or only contain the start node." << endl;
+    }
+
+    Edge* edge = closestNode->previous;
+
+    Node* finalGoalNode = new Node("goal", goal.latitude, goal.longitude);
+    finalGoalNode->distance = closestNode->bestDistance;
+    cout << "Estimated f-score from start to actual goal coordinates via closest graph node (" << closestNode->id << "): " << finalGoalNode->distance << endl;
+
+
+    double lastLegCost = closestNode->coordinates.haversineDistance(goal) * a_star_multiplier;
+    path.push_back(new Edge(closestNode, finalGoalNode, nullptr, lastLegCost, "foot"));
+
     while (edge != nullptr) {
-        //cout << "Closest node: " << closestNode->id << endl; // Print the closest node ID
-        path.push_back(edge); // Add the current node to the path
-        closestNode = edge->startingNode; // Get the starting node of the edge
-        edge = closestNode->previous; // Get the previous edge
+        path.push_back(edge);
+        if (edge->startingNode == nullptr) {
+            cerr << "Error in path reconstruction: edge has null startingNode." << endl;
+            break;
+        }
+        closestNode = edge->startingNode;
+        edge = closestNode->previous;
     }
 
     reverse(path.begin(), path.end());
@@ -390,14 +437,18 @@ vector<Edge*> Manager::shortestPathAstar(Node* startNode, const Coordinates& goa
 bool sortPaths(const pair<double, vector<Edge*>>& a, const pair<double, vector<Edge*>>& b){
     return a.first < b.first;
 }
-vector<pair<double,vector<Edge*>>> Manager::shortestPath(const Coordinates& start, const Coordinates& goal,Time* startTime,double max_tentative,const int alternatives,const float a_star_multiplier) const{
+vector<pair<double,vector<Edge*>>> Manager::shortestPath(const Coordinates& start, const Coordinates& goal,Time* startTime,double max_tentative,const int alternatives,const float a_star_multiplier){
+
     vector<Point3D> nearestNodes= kdTree.kNearestNeighbors(start.toPoint3D(), alternatives); // Get the k nearest neighbors
+    //reverse list
+    //reverse(nearestNodes.begin(), nearestNodes.end());
     vector<Node*> startNodes;
     vector<float> distances_TMP;
     for (const Point3D node : nearestNodes){
         Node* startNode = graph.getNode(node.id); // Get the node from the graph using the ID
         startNodes.push_back(startNode); // Add the node to the vector
         distances_TMP.push_back(startNode->coordinates.haversineDistance(start));
+        cout << "Debug Rodrigo chato: "<<startNode->name <<" "<<startNode->id<< endl;
     }
 
     vector<pair<double,vector<Edge*>>> result;
@@ -417,7 +468,7 @@ vector<pair<double,vector<Edge*>>> Manager::shortestPath(const Coordinates& star
             distanceWithEuristic,"foot"));
 
         // get distance of the last edge
-        Node* last = path.front()->destinationNode; // Get the last edge
+        Node* last = path.back()->startingNode;
         double distance = last->bestDistance + distanceWithEuristic;
 
         cout << "RESULTS--------------------------------------------------";
@@ -427,8 +478,15 @@ vector<pair<double,vector<Edge*>>> Manager::shortestPath(const Coordinates& star
 
 
         result.push_back(make_pair(distance,path)); // Add the distance and path to the result
-        //printPath(path);
+        //cout << "Debug ---------------------------------------------------:"<<endl;
+        //newPrintPath(path,startTime);
 
+    }
+    for (auto i :result) {
+        cout << "Debug ---------------------------------------------------:"<<endl;
+        cout << "Distance: " << i.first << endl; // Print the distance
+        cout <<"First Stop" << i.second.front()->destinationNode->name << endl;
+        //newPrintPath(path,startTime);
     }
     std::sort(result.begin(), result.end(),sortPaths);
     return result; // Return the result
@@ -492,7 +550,10 @@ void Manager::newPrintPath(const vector<Edge*>& path, Time* journeyStartTime) co
 
         Node* legStartNode = edge->startingNode; // Physical station/point where this leg begins
         Node* legDestNode = edge->destinationNode;   // Physical station/point where this leg ends
-
+        //cout<<endl<< "DEBUG "<<legDestNode->id<<endl;
+        if (legStartNode !=nullptr) {
+            //cout<<endl<< "DEBUG "<<legStartNode->id<<endl;
+        }
         string legStartName = "Your Current Location";
         if (legStartNode) {
             legStartName = legStartNode->name;
