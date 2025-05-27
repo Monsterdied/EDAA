@@ -67,7 +67,8 @@ void performPathQualityAnalysis(Manager& manager) {
         {Coordinates(-8.759389, 41.377656), Coordinates(-8.565786, 41.175185)}
     };
 
-    vector<float> multipliers = {1.0f, 1.5f, 2.0f, 2.5f};
+    // Different A* multiplier values to test
+    vector<float> iterLimits = {25000,50000, 500000, 1000000};
     Time* startTime=new Time(9, 0, 0);
 
     cout << "\n=== Path Quality Analysis ===\n";
@@ -80,12 +81,12 @@ void performPathQualityAnalysis(Manager& manager) {
         cout << ")\n";
         cout << "----------------------------------------\n";
 
-        for (float multiplier : multipliers) {
-            cout << "\nA* Multiplier: " << multiplier << endl;
+        for (float iterLimit : iterLimits) {
+            cout << "\nlimit iterations to: " << iterLimit << endl;
 
             vector<pair<double, vector<Edge*>>> paths =
                 manager.shortestPath(testCases[i].first, testCases[i].second,
-                                   startTime->clone(), 900000000, 1, multiplier);
+                                   startTime->clone(), iterLimit, 1, 1);
 
             if (paths.empty() || paths[0].second.empty()) {
                 cout << "No path found!\n";
@@ -123,7 +124,7 @@ void performPathfindingBenchmark(Manager& manager) {
     };
 
     // Different A* multiplier values to test
-    vector<float> multipliers = {1.0f, 1.5f, 2.0f, 2.5f};
+    vector<float> iterLimits = {25000,50000, 500000, 1000000};
 
     // Number of times to repeat each test for averaging
     const int numRepetitions = 5;
@@ -140,8 +141,8 @@ void performPathfindingBenchmark(Manager& manager) {
              << testCase.second.longitude << "," << testCase.second.latitude
              << ")\n";
 
-        for (float multiplier : multipliers) {
-            cout << "\nA* multiplier: " << multiplier << endl;
+        for (float maxIter : iterLimits) {
+            cout << "\nLimit iterations to: " << maxIter << endl;
 
             vector<double> executionTimes;
 
@@ -153,7 +154,7 @@ void performPathfindingBenchmark(Manager& manager) {
                 // Perform pathfinding
                 vector<pair<double, vector<Edge*>>> paths =
                     manager.shortestPath(testCase.first, testCase.second,
-                                      timeClone, 900000000, 1, multiplier);
+                                      timeClone, maxIter, 1, 1);
 
                 auto endTime = chrono::high_resolution_clock::now();
 
@@ -200,8 +201,8 @@ int main(){
          << deltaTime1.count()%60 << " seconds" << endl;
 
     // Run the benchmarks
-    //performPathfindingBenchmark(manager);
-    //performPathQualityAnalysis(manager);
+    performPathfindingBenchmark(manager);
+    performPathQualityAnalysis(manager);
 
     //time
     //
