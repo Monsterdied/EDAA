@@ -296,16 +296,23 @@ void Manager::printPath(const vector<Edge*>& path) const{
 
 }
 
-vector<Edge*> Manager::getKNearestFootEdges(Node* node, int k)const {
+vector<Edge*> Manager::getKNearestFootEdges(Node* node, int k,float const a_star_multiplier)const {
     vector<Point3D> footEdges = kdTree.kNearestNeighbors(node->toPoint3D(), k); // Get the k nearest foot edges
     vector<Edge*> footEdgesVector;
     for (const auto& footEdge : footEdges) {
         Node* footNode = graph.getNode(footEdge.id); // Get the foot node from the graph using the ID
+        if (footNode->id == node->id) {
+            //cout<<"Bugged";
+            continue; // Skip if the foot node is the same as the current node
+        }
         if (footNode != nullptr) {
-            double distance = node->coordinates.haversineDistance(footNode->coordinates); // Calculate the distance to the foot node
+            int const distance = node->coordinates.haversineDistance(footNode->coordinates)*(a_star_multiplier+2); // Calculate the distance to the foot node
 
             Edge* edge = new Edge(node, footNode, nullptr, distance, "foot"); // Create a new edge with the foot node
+            edge->rideName = "DEBUG1";
             footEdgesVector.push_back(edge); // Add the edge to the vector
+        }else {
+            cout<<"Bugged";
         }
     }
     return footEdgesVector; // Return the vector of foot edges
@@ -354,8 +361,8 @@ vector<Edge*> Manager::shortestPathAstar(Node* startNode, const Coordinates& goa
 
         // Explore neighbors
         vector<Edge*> directions = graph.getAdjacentEdges(current->id);
-        //vector<Edge*> footDirections = getKNearestFootEdges(current, 5);
-        //directions.insert(directions.end(), footDirections.begin(), footDirections.end()); // Add the foot edges to the directions
+        vector<Edge*> footDirections = getKNearestFootEdges(current, 5,a_star_multiplier);
+        directions.insert(directions.end(), footDirections.begin(), footDirections.end()); // Add the foot edges to the directions
 
         for (const auto& dir : directions) {
             Node* neighbor = dir->destinationNode; // Get the neighboring node
@@ -372,7 +379,7 @@ vector<Edge*> Manager::shortestPathAstar(Node* startNode, const Coordinates& goa
             }
 
             double g_score_current = current->distance;
-            double cost_current_to_neighbor = dir->travelTime + (dir->type == "foot" ? 0 : waitingForStop);
+            double cost_current_to_neighbor = dir->travelTime + waitingForStop;
             double g_score_neighbor = g_score_current + cost_current_to_neighbor;
 
 
@@ -530,7 +537,10 @@ void Manager::newPrintPath(const vector<Edge*>& path, Time journeyStartTime) con
 
         Node* legStartNode = edge->startingNode; // Physical station/point where this leg begins
         Node* legDestNode = edge->destinationNode;   // Physical station/point where this leg ends
-
+        //cout<<endl<< "DEBUG "<<legDestNode->id<<endl;
+        if (legStartNode !=nullptr) {
+            //cout<<endl<< "DEBUG "<<legStartNode->id<<endl;
+        }
         string legStartName = "Your Current Location";
         if (legStartNode) {
             legStartName = legStartNode->name;

@@ -33,7 +33,7 @@ class Manager {
          * @param k The number of nearest foot path edges to find.
          * @return A vector of Edge pointers representing the k nearest foot path edges.
         */
-        vector<Edge*> getKNearestFootEdges(Node* node, int k) const;
+         vector<Edge*> getKNearestFootEdges(Node* node, int k,float a_star_multiplier)const;
 
     public:
         Graph graph; ///< The Graph object managing the network structure.
